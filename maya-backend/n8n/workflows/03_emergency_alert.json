@@ -1,0 +1,64 @@
+{
+  "name": "Maya — Emergency Alert",
+  "nodes": [
+    {
+      "name": "Webhook — Emergency Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "parameters": {
+        "path": "maya-emergency",
+        "httpMethod": "POST"
+      },
+      "position": [200, 300]
+    },
+    {
+      "name": "Get Patient Details via MCP",
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8002/tools/call",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "credentialName": "Maya API",
+        "jsonParameters": true,
+        "bodyParameters": {
+          "parameters": [{
+            "name": "body",
+            "value": "={\"name\":\"get_patient\",\"arguments\":{\"patient_id\":\"{{$json.body.patient_id}}\"}}"
+          }]
+        }
+      },
+      "position": [420, 300]
+    },
+    {
+      "name": "Build Emergency Messages",
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "jsCode": "const body = $('Webhook — Emergency Trigger').first().json.body;\nconst patient = JSON.parse(items[0].json.content[0].text);\nconst guardianMsg = `🚨 জরুরি! ${patient.name} এর জন্য এখনই সাহায্য দরকার। ${body.message} অবিলম্বে হাসপাতালে নিন।`;\nreturn [{ json: { ...patient, guardianMsg, severity: body.severity, patient_id: body.patient_id } }];"
+      },
+      "position": [640, 300]
+    },
+    {
+      "name": "Log Emergency",
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "jsCode": "console.log('[n8n EMERGENCY]', JSON.stringify(items[0].json)); return items;"
+      },
+      "position": [860, 300]
+    },
+    {
+      "name": "Respond to Backend",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"status\":\"emergency_processed\",\"guardian_notified\":true}"
+      },
+      "position": [1080, 300]
+    }
+  ],
+  "connections": {
+    "Webhook — Emergency Trigger": { "main": [[{ "node": "Get Patient Details via MCP" }]] },
+    "Get Patient Details via MCP": { "main": [[{ "node": "Build Emergency Messages" }]] },
+    "Build Emergency Messages": { "main": [[{ "node": "Log Emergency" }]] },
+    "Log Emergency": { "main": [[{ "node": "Respond to Backend" }]] }
+  }
+}

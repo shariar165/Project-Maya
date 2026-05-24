@@ -1,0 +1,45 @@
+{
+  "name": "Maya — Daily Reminders",
+  "nodes": [
+    {
+      "name": "Schedule — 9am Bangladesh",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 3 * * *" }] }
+      },
+      "position": [200, 300]
+    },
+    {
+      "name": "Trigger Daily Reminders",
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:8000/n8n/health",
+        "notes": "In production: POST to a /internal/send-reminders endpoint"
+      },
+      "position": [420, 300]
+    },
+    {
+      "name": "Get All Active Patients",
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "GET",
+        "url": "http://localhost:8000/n8n/health"
+      },
+      "position": [640, 300]
+    },
+    {
+      "name": "Log Reminder Run",
+      "type": "n8n-nodes-base.code",
+      "parameters": {
+        "jsCode": "console.log('[n8n] Daily reminders triggered at ' + new Date().toISOString()); return items;"
+      },
+      "position": [860, 300]
+    }
+  ],
+  "connections": {
+    "Schedule — 9am Bangladesh": { "main": [[{ "node": "Trigger Daily Reminders" }]] },
+    "Trigger Daily Reminders": { "main": [[{ "node": "Get All Active Patients" }]] },
+    "Get All Active Patients": { "main": [[{ "node": "Log Reminder Run" }]] }
+  }
+}

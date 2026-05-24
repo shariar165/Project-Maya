@@ -1,0 +1,46 @@
+{
+  "name": "Maya — Weekly Health Report",
+  "nodes": [
+    {
+      "name": "Schedule — Sunday 8am",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "parameters": {
+        "rule": { "interval": [{ "field": "cronExpression", "expression": "0 2 * * 0" }] }
+      },
+      "position": [200, 300]
+    },
+    {
+      "name": "Generate PDF Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/generate-report",
+        "responseFormat": "file",
+        "jsonParameters": true,
+        "bodyParameters": {
+          "parameters": [{
+            "name": "body",
+            "value": "={\"health_worker_id\":\"default\",\"week_ending\":\"{{$now.toISO()}}\"}"
+          }]
+        }
+      },
+      "position": [420, 300]
+    },
+    {
+      "name": "Send Email with PDF",
+      "type": "n8n-nodes-base.emailSend",
+      "parameters": {
+        "fromEmail": "maya@yourplatform.com",
+        "toEmail": "healthworker@example.com",
+        "subject": "=Maya Weekly Patient Summary — {{$now.toFormat('dd MMM yyyy')}}",
+        "text": "Dear Health Worker,\n\nPlease find attached this week's patient health summary from Maya.\n\nMaya Maternal Health Platform",
+        "attachments": "data"
+      },
+      "position": [640, 300]
+    }
+  ],
+  "connections": {
+    "Schedule — Sunday 8am": { "main": [[{ "node": "Generate PDF Report" }]] },
+    "Generate PDF Report": { "main": [[{ "node": "Send Email with PDF" }]] }
+  }
+}
