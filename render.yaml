@@ -3,7 +3,7 @@ services:
     name: maya-backend
     runtime: python
     buildCommand: pip install -r maya-backend/requirements.txt
-    startCommand: cd maya-backend && uvicorn main:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --app-dir maya-backend
     plan: free
     envVars:
       - key: ANTHROPIC_API_KEY
