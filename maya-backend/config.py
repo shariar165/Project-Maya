@@ -30,8 +30,8 @@ DEBUG              = os.getenv("DEBUG", "True").lower() == "true"
 PRIMARY_MODEL  = "claude-sonnet-4-6"
 HAIKU_MODEL    = "claude-haiku-4-5-20251001"
 GROQ_MODEL     = "llama-3.3-70b-versatile"
-CHROMA_PATH    = "./chroma_db"
-RISK_MODEL_PATH = "./models/risk_model.pkl"
+CHROMA_PATH    = os.getenv("CHROMA_PATH", "./chroma_db")
+RISK_MODEL_PATH = os.getenv("RISK_MODEL_PATH", "./models/risk_model.pkl")
 
 MCP_KNOWLEDGE_URL = "http://localhost:8001"
 MCP_PATIENT_URL   = "http://localhost:8002"

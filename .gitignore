@@ -20,16 +20,9 @@ env/
 .env.*
 !.env.example
 
-# Database files
-*.db
-*.sqlite
-*.sqlite3
-
-# ChromaDB vector store (regenerate with ingest_all.py)
-maya-backend/chroma_db/
-
-# Raw PDFs / source documents (large, not tracked)
-maya-backend/docs/raw/
+# Runtime SQLite databases (ephemeral — not source)
+maya-backend/maya.db
+maya-backend/test_*.db
 
 # Logs and temp output
 *.log
