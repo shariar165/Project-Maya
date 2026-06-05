@@ -24,7 +24,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
 from config import parse_llm_json
-from db.models import AuthSession, Patient, ProactiveMessage
+from db.models import AuthSession, Appointment, HealthLog, Patient, ProactiveMessage
 from db.session import get_db, init_db
 from agents.orchestrator import get_graph, MayaState
 from agents.response_composer import compose_tara_response
@@ -132,6 +132,17 @@ class HealthLogRequest(BaseModel):
     patient_id: str
     data_type:  str
     value:      str
+
+class UpdateProfileRequest(BaseModel):
+    name:               Optional[str]  = None
+    pregnancy_week:     Optional[int]  = None
+    lang:               Optional[str]  = None
+    age:                Optional[int]  = None
+    city:               Optional[str]  = None
+    blood_group:        Optional[str]  = None
+    is_first_pregnancy: Optional[bool] = None
+    guardian_name:      Optional[str]  = None
+    guardian_phone:     Optional[str]  = None
 
 
 # ── Auth endpoints ────────────────────────────────────────────────────────────
@@ -275,6 +286,89 @@ async def register(req: RegisterRequest):
         }
 
 
+# ── Profile endpoints ────────────────────────────────────────────────────────
+
+@app.get("/profile/{patient_id}")
+async def get_profile(patient_id: str, authorization: Optional[str] = Header(None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    token = authorization.split(" ", 1)[1]
+    with get_db() as db:
+        session = db.query(AuthSession).filter(
+            AuthSession.token == token,
+            AuthSession.patient_id == patient_id,
+        ).first()
+        if not session:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        patient = db.query(Patient).filter(Patient.id == patient_id).first()
+        if not patient:
+            raise HTTPException(status_code=404, detail="Patient not found")
+        return {
+            "id":               patient.id,
+            "phone":            patient.phone,
+            "name":             patient.name,
+            "pregnancyWeek":    patient.pregnancy_week,
+            "lang":             patient.lang,
+            "age":              patient.age,
+            "city":             patient.city,
+            "bloodGroup":       patient.blood_group,
+            "isFirstPregnancy": patient.is_first_pregnancy,
+            "guardianName":     patient.guardian_name,
+            "guardianPhone":    patient.guardian_phone,
+            "lastWeight":       patient.last_weight,
+            "lastBpReading":    patient.last_bp_reading,
+        }
+
+
+@app.put("/profile/{patient_id}")
+async def update_profile(
+    patient_id: str,
+    req: UpdateProfileRequest,
+    authorization: Optional[str] = Header(None),
+):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    token = authorization.split(" ", 1)[1]
+    with get_db() as db:
+        session = db.query(AuthSession).filter(
+            AuthSession.token == token,
+            AuthSession.patient_id == patient_id,
+        ).first()
+        if not session:
+            raise HTTPException(status_code=401, detail="Invalid token")
+        patient = db.query(Patient).filter(Patient.id == patient_id).first()
+        if not patient:
+            raise HTTPException(status_code=404, detail="Patient not found")
+
+        if req.name               is not None: patient.name               = req.name
+        if req.pregnancy_week     is not None:
+            patient.pregnancy_week = req.pregnancy_week
+            from datetime import date, timedelta
+            weeks_remaining = 40 - req.pregnancy_week
+            patient.due_date = (date.today() + timedelta(weeks=weeks_remaining)).isoformat()
+        if req.lang               is not None: patient.lang               = req.lang
+        if req.age                is not None: patient.age                = req.age
+        if req.city               is not None: patient.city               = req.city
+        if req.blood_group        is not None: patient.blood_group        = req.blood_group
+        if req.is_first_pregnancy is not None: patient.is_first_pregnancy = req.is_first_pregnancy
+        if req.guardian_name      is not None: patient.guardian_name      = req.guardian_name
+        if req.guardian_phone     is not None: patient.guardian_phone     = req.guardian_phone
+
+        return {
+            "status":           "updated",
+            "id":               patient.id,
+            "name":             patient.name,
+            "pregnancyWeek":    patient.pregnancy_week,
+            "lang":             patient.lang,
+            "age":              patient.age,
+            "city":             patient.city,
+            "bloodGroup":       patient.blood_group,
+            "isFirstPregnancy": patient.is_first_pregnancy,
+            "guardianName":     patient.guardian_name,
+            "guardianPhone":    patient.guardian_phone,
+        }
+
+
 # ── Main chat endpoint ────────────────────────────────────────────────────────
 
 @app.post("/ask")
@@ -309,6 +403,11 @@ async def ask(req: AskRequest, authorization: Optional[str] = Header(None)):
             "voice_text":           "",
             "guardian_alert":       None,
             "risk_score":           None,
+            "distress_level":       "mild",
+            "crisis":               False,
+            "escalate":             False,
+            "resources":            {},
+            "suggest_meditation":   False,
         }
 
         final_state = await get_graph().ainvoke(initial_state)
@@ -390,6 +489,53 @@ async def health_log(req: HealthLogRequest):
     from tools.patient_tool import log_health_data
     result = log_health_data(req.patient_id, req.data_type, req.value)
     return {"status": "logged", "detail": result}
+
+
+@app.get("/appointments/{patient_id}")
+async def get_appointments(patient_id: str, limit: int = 20):
+    """Return appointments for a patient sorted by scheduled_at ascending."""
+    with get_db() as db:
+        appts = (
+            db.query(Appointment)
+            .filter(Appointment.patient_id == patient_id)
+            .order_by(Appointment.scheduled_at.asc())
+            .limit(limit)
+            .all()
+        )
+        return [
+            {
+                "id":               str(a.id),
+                "appointment_type": a.appointment_type,
+                "scheduled_at":     a.scheduled_at.isoformat() if a.scheduled_at else None,
+                "location":         a.location,
+                "attended":         a.attended,
+            }
+            for a in appts
+        ]
+
+
+@app.get("/health-logs/{patient_id}")
+async def get_health_logs(
+    patient_id: str,
+    data_type: Optional[str] = None,
+    limit: int = 50,
+):
+    """Return health logs for a patient sorted newest-first. Filter by data_type if provided."""
+    with get_db() as db:
+        q = db.query(HealthLog).filter(HealthLog.patient_id == patient_id)
+        if data_type:
+            q = q.filter(HealthLog.data_type == data_type)
+        logs = q.order_by(HealthLog.created_at.desc()).limit(limit).all()
+        return [
+            {
+                "id":         str(l.id),
+                "data_type":  l.data_type,
+                "value":      l.value,
+                "severity":   l.severity,
+                "created_at": l.created_at.isoformat() if l.created_at else None,
+            }
+            for l in logs
+        ]
 
 
 # ── PDF report (for n8n) ──────────────────────────────────────────────────────

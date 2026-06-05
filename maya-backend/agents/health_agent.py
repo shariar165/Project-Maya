@@ -1,6 +1,9 @@
+import logging
 from config import call_llm_with_fallback, parse_llm_json
 from tools.rag_tool import rag_search
 from agents.response_composer import MayaState
+
+log = logging.getLogger("maya.health_agent")
 
 HEALTH_SYSTEM = """You are TARA, a warm maternal health companion for Maya platform.
 You specialize in pregnancy health guidance for Bangladeshi mothers.
@@ -26,8 +29,10 @@ RULES:
 - Keep response under 3 sentences.
 - Never diagnose. Always suggest doctor for medical decisions.
 
+If the user mentions how many hours they slept (e.g., "৭ ঘন্টা ঘুমিয়েছি", "slept 6.5 hours", "আজ ৮ ঘণ্টা ঘুম হয়েছে"), extract the numeric value for "sleep_hours". Otherwise return null.
+
 Respond ONLY in this JSON:
-{{"emotion": "happy|caring|alert|celebration", "message": "bangla response here"}}
+{{"emotion": "happy|caring|alert|celebration", "message": "bangla response here", "sleep_hours": null}}
 """
 
 
@@ -61,7 +66,23 @@ def health_node(state: MayaState) -> MayaState:
         system=prompt,
         max_tokens=400,
     )
-    result = parse_llm_json(raw)
+    result = parse_llm_json(raw) or {}
+
+    # Log sleep duration if the LLM extracted one
+    raw_sleep = result.get("sleep_hours")
+    if raw_sleep is not None:
+        pid = state.get("patient_id", "")
+        if pid and pid not in ("guest", ""):
+            try:
+                sleep_val = float(raw_sleep)
+                if 0 < sleep_val <= 24:
+                    from tools.patient_tool import log_health_data
+                    log_health_data(pid, "sleep", str(round(sleep_val, 1)))
+                    log.info("Logged sleep %.1f hrs for patient %s", sleep_val, pid)
+            except (ValueError, TypeError) as exc:
+                log.warning("sleep log skipped — bad value %r: %s", raw_sleep, exc)
+            except Exception as exc:
+                log.error("sleep log failed for patient %s: %s", pid, exc)
 
     state["emotion"]     = result.get("emotion", "caring")
     state["message"]     = result.get("message", "")

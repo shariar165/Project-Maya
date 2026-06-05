@@ -31,6 +31,12 @@ _SYMPTOM_KEYWORDS = [
     "weak", "dizzy", "মাথা ঘুরছে",
 ]
 
+# Sleep-reporting phrases that indicate a duration log (not a complaint)
+_SLEEP_LOG_KEYWORDS = [
+    "ঘুমিয়েছি", "ঘুমালাম", "ঘুম হয়েছে", "ঘুম হলো", "ঘুমিয়ে ছিলাম",
+    "slept", "hours of sleep", "hrs sleep",
+]
+
 _EMOTION_KEYWORDS = [
     "কষ্ট", "কান্না", "দুঃখ", "sad", "depressed", "anxious",
     "ভয়", "চিন্তা", "stressed", "alone", "একা", "কেউ বোঝে না",
@@ -47,6 +53,8 @@ def _keyword_classify(message: str) -> str | None:
         return "symptom"
     if any(kw in lower for kw in _EMOTION_KEYWORDS):
         return "emotion"
+    if any(kw in lower for kw in _SLEEP_LOG_KEYWORDS):
+        return "health"
     return None
 
 
@@ -57,7 +65,7 @@ Patient context: Week {week}, Risk: {risk_level}
 Message: {message}
 
 Return ONLY one word from this list:
-- health       → nutrition, weight, appointments, week info, baby development
+- health       → nutrition, weight, sleep duration, appointments, week info, baby development
 - symptom      → any body symptom, pain, bleeding, swelling, headache, movement
 - emotion      → feelings, stress, anxiety, sadness, relationship, mood
 - guardian     → message from family member, guardian asking about patient
