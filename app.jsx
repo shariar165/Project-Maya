@@ -21,24 +21,26 @@ function loadUser() {
 // ── Onboarding (shown to authenticated users on first visit) ──────────
 function Onboarding({ onDone, state, setState }) {
   const [step, setStep] = React.useState(0);
+  const lang = state.lang || 'mixed';
+  const L = (key, type) => window.tStr(key, lang, type);
   const steps = [
     {
       mood: 'happy',
-      title: 'Hello, mama-to-be 🌸',
-      sub: "I'm Tara. I'll be your companion through every soft, scary, beautiful day.",
-      action: 'Nice to meet you',
+      title: L('ob1Title', 'tara'),
+      sub:   L('ob1Sub',   'tara'),
+      action: L('ob1Action'),
     },
     {
       mood: 'idle',
-      title: 'A friend, not a doctor',
-      sub: 'I listen, I encourage, I help you remember to drink water and breathe. For medical things, I gently point you to real care.',
-      action: 'Got it',
+      title: L('ob2Title', 'tara'),
+      sub:   L('ob2Sub',   'tara'),
+      action: L('ob2Action'),
     },
     {
       mood: 'listening',
-      title: 'When you talk, I show up',
-      sub: 'Type or speak to me anytime — in বাংলা or English. My face shows that I really hear you.',
-      action: "Let's begin",
+      title: L('ob3Title', 'tara'),
+      sub:   L('ob3Sub',   'tara'),
+      action: L('ob3Action'),
     },
   ];
   const s = steps[step];
@@ -79,19 +81,20 @@ function Onboarding({ onDone, state, setState }) {
         marginTop: 8, padding: 8, background: 'transparent', border: 'none',
         color: '#5A3E5F', fontSize: 12, cursor: 'pointer',
       }}>
-        Skip intro
+        {L('skipIntro')}
       </button>
     </div>
   );
 }
 
-function BottomNav({ screen, setScreen }) {
+function BottomNav({ screen, setScreen, lang }) {
+  const L = (key, type) => window.tStr(key, lang || 'mixed', type);
   const items = [
-    { k: 'home',    label: 'Home',    icon: 'home' },
-    { k: 'journey', label: 'Journey', icon: 'journey' },
-    { k: 'chat',    label: 'Tara',    icon: 'tara' },
-    { k: 'wellness',label: 'Heart',   icon: 'heart' },
-    { k: 'care',    label: 'Care',    icon: 'care' },
+    { k: 'home',    label: L('nav_home'),    icon: 'home' },
+    { k: 'journey', label: L('nav_journey'), icon: 'journey' },
+    { k: 'chat',    label: 'Tara',           icon: 'tara' },
+    { k: 'wellness',label: L('nav_heart'),   icon: 'heart' },
+    { k: 'care',    label: L('nav_care'),    icon: 'care' },
   ];
   const ICONS = {
     home:    (a) => <><path d="M3 11l9-8 9 8v10a2 2 0 0 1-2 2h-4v-7h-6v7H5a2 2 0 0 1-2-2z" {...a}/></>,
@@ -292,7 +295,7 @@ function App() {
         <Screen state={state} setState={setState} openScreen={openScreen} tweak={t} setTweak={setTweak} onLogout={handleLogout}/>
       </div>
 
-      {!isVoice && !isSubPage && <BottomNav screen={screen} setScreen={setScreen}/>}
+      {!isVoice && !isSubPage && <BottomNav screen={screen} setScreen={setScreen} lang={t.lang}/>}
 
       {showIntro && !showSplash && (authStatus === 'authenticated' || authStatus === 'guest') &&
         <Onboarding onDone={() => setShowIntro(false)} state={state} setState={setState}/>}

@@ -5,19 +5,21 @@
 // ──────────────────────────────────────────────────────────────────
 function JourneyScreen({ state, setState, openScreen }) {
   const { iconBtn, primaryBtn, ghostBtn } = window.uiBtns;
+  const lang = state.lang;
+  const L = (key, type) => window.tStr(key, lang, type);
   const monthFromWeek = Math.min(9, Math.ceil(state.week / 4.345));
   const [active, setActive] = React.useState(monthFromWeek);
 
   const months = [
-  { n: 1, t: 'A tiny spark', accent: '#FCE0D4', tara: 'sleepy', body: 'You may feel very tired — please rest often.', baby: "Baby's heart starts beating around week 6.", eat: ['Folic acid daily', 'Fresh fruits', 'Yogurt + nuts'], avoid: ['Raw fish or eggs', 'Soft cheese', 'Smoking around you'] },
-  { n: 2, t: 'First flutter', accent: '#FBD6CB', tara: 'idle', body: 'Morning nausea is normal. Eat small meals.', baby: 'Tiny arm and leg buds are forming.', eat: ['Ginger tea', 'Crackers in the morning', 'Lentils'], avoid: ['Strong perfumes', 'Long bus rides', 'Skipping meals'] },
-  { n: 3, t: 'Becoming you', accent: '#F8CCD9', tara: 'happy', body: 'Energy may return. First scan this month.', baby: 'Fingers, toes, eyelids forming.', eat: ['Spinach + beef liver', 'Eggs', 'Citrus fruits'], avoid: ['Heavy lifting', 'Hot baths', 'Self-medicating'] },
-  { n: 4, t: 'A quieter calm', accent: '#F1C7DA', tara: 'happy', body: 'You may feel calmer. Belly starts to show.', baby: "Baby can hear muffled sounds now.", eat: ['Dal + rice', 'Milk daily', 'Seasonal fruits'], avoid: ['Caffeine > 1 cup', 'Sleeping on back', 'Late-night junk'] },
-  { n: 5, t: 'First kicks', accent: '#EBC0E0', tara: 'celebrate', body: 'You may feel the first soft flutters.', baby: 'Baby starts kicking and turning.', eat: ['Calcium-rich foods', 'Whole grains', 'Sweet potato'], avoid: ['Long standing', 'Tight clothes', 'Skipping checkups'] },
-  { n: 6, t: 'Your voice, their world', accent: '#E0D5F0', tara: 'listening', body: 'Talk and sing to baby — they hear you.', baby: 'Eyelids open, eyebrows growing.', eat: ['Iron-rich greens', 'Plenty of water', 'Nuts + seeds'], avoid: ['Stress where you can', 'Heavy spices', 'Long travel'] },
-  { n: 7, t: 'Slowing down', accent: '#D6CCEC', tara: 'idle', body: 'Backaches may begin. Use a pillow at night.', baby: 'Baby practices breathing motions.', eat: ['Omega-3 rich fish (cooked)', 'Almonds', 'Bananas'], avoid: ['Sleeping on right side long', 'Heavy housework', 'Tight belts'] },
-  { n: 8, t: 'Heavy and held', accent: '#E5D8E8', tara: 'idle', body: 'Swelling in feet is common. Elevate them.', baby: 'Baby gains weight quickly now.', eat: ['Low-salt meals', 'Fresh fruit', 'Coconut water'], avoid: ['Standing > 30 min', 'Long car rides', 'Forgetting kick counts'] },
-  { n: 9, t: 'Almost here', accent: '#FBD6CB', tara: 'celebrate', body: 'Pack your bag. Rest, eat, breathe.', baby: 'Baby is full term, ready to meet you.', eat: ['Dates (helps labor!)', 'Small frequent meals', 'Warm soup'], avoid: ['Panic — Tara is here', 'Being alone far from help', 'Skipping signs of labor'] }];
+  { n: 1, tKey: 'monthTitle1', accent: '#FCE0D4', tara: 'sleepy', body: 'You may feel very tired — please rest often.', baby: "Baby's heart starts beating around week 6.", eat: ['Folic acid daily', 'Fresh fruits', 'Yogurt + nuts'], avoid: ['Raw fish or eggs', 'Soft cheese', 'Smoking around you'] },
+  { n: 2, tKey: 'monthTitle2', accent: '#FBD6CB', tara: 'idle', body: 'Morning nausea is normal. Eat small meals.', baby: 'Tiny arm and leg buds are forming.', eat: ['Ginger tea', 'Crackers in the morning', 'Lentils'], avoid: ['Strong perfumes', 'Long bus rides', 'Skipping meals'] },
+  { n: 3, tKey: 'monthTitle3', accent: '#F8CCD9', tara: 'happy', body: 'Energy may return. First scan this month.', baby: 'Fingers, toes, eyelids forming.', eat: ['Spinach + beef liver', 'Eggs', 'Citrus fruits'], avoid: ['Heavy lifting', 'Hot baths', 'Self-medicating'] },
+  { n: 4, tKey: 'monthTitle4', accent: '#F1C7DA', tara: 'happy', body: 'You may feel calmer. Belly starts to show.', baby: "Baby can hear muffled sounds now.", eat: ['Dal + rice', 'Milk daily', 'Seasonal fruits'], avoid: ['Caffeine > 1 cup', 'Sleeping on back', 'Late-night junk'] },
+  { n: 5, tKey: 'monthTitle5', accent: '#EBC0E0', tara: 'celebrate', body: 'You may feel the first soft flutters.', baby: 'Baby starts kicking and turning.', eat: ['Calcium-rich foods', 'Whole grains', 'Sweet potato'], avoid: ['Long standing', 'Tight clothes', 'Skipping checkups'] },
+  { n: 6, tKey: 'monthTitle6', accent: '#E0D5F0', tara: 'listening', body: 'Talk and sing to baby — they hear you.', baby: 'Eyelids open, eyebrows growing.', eat: ['Iron-rich greens', 'Plenty of water', 'Nuts + seeds'], avoid: ['Stress where you can', 'Heavy spices', 'Long travel'] },
+  { n: 7, tKey: 'monthTitle7', accent: '#D6CCEC', tara: 'idle', body: 'Backaches may begin. Use a pillow at night.', baby: 'Baby practices breathing motions.', eat: ['Omega-3 rich fish (cooked)', 'Almonds', 'Bananas'], avoid: ['Sleeping on right side long', 'Heavy housework', 'Tight belts'] },
+  { n: 8, tKey: 'monthTitle8', accent: '#E5D8E8', tara: 'idle', body: 'Swelling in feet is common. Elevate them.', baby: 'Baby gains weight quickly now.', eat: ['Low-salt meals', 'Fresh fruit', 'Coconut water'], avoid: ['Standing > 30 min', 'Long car rides', 'Forgetting kick counts'] },
+  { n: 9, tKey: 'monthTitle9', accent: '#FBD6CB', tara: 'celebrate', body: 'Pack your bag. Rest, eat, breathe.', baby: 'Baby is full term, ready to meet you.', eat: ['Dates (helps labor!)', 'Small frequent meals', 'Warm soup'], avoid: ['Panic — Tara is here', 'Being alone far from help', 'Skipping signs of labor'] }];
 
   const m = months[active - 1];
 
@@ -27,11 +29,11 @@ function JourneyScreen({ state, setState, openScreen }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <div style={{ fontSize: 12, fontWeight: 600, color: '#7A5E78', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              Your journey
+              {L('yourJourney')}
             </div>
             <div style={{ fontFamily: 'var(--display)', fontSize: 28, color: '#2A1A36', marginTop: 4, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-              Month <span style={{ fontStyle: 'italic' }}>{m.n}</span><br />
-              <span style={{ fontSize: 22, color: '#5A3E5F' }}>{m.t}</span>
+              {L('month')} <span style={{ fontStyle: 'italic' }}>{m.n}</span><br />
+              <span style={{ fontSize: 22, color: '#5A3E5F' }}>{L(m.tKey, 'tara')}</span>
             </div>
           </div>
           <Tara size={108} mood={m.tara} />
@@ -50,7 +52,7 @@ function JourneyScreen({ state, setState, openScreen }) {
             fontSize: 12, fontWeight: 600, letterSpacing: '-0.01em',
             boxShadow: active === mm.n ? '0 6px 18px -8px rgba(61,40,64,0.5)' : 'none'
           }}>
-              Month {mm.n}
+              {L('month')} {mm.n}
             </button>
           )}
         </div>
@@ -59,7 +61,7 @@ function JourneyScreen({ state, setState, openScreen }) {
       {/* hero of month */}
       <div style={{ padding: '14px 22px 0' }}>
         <Card style={{ background: m.accent, padding: 22 }}>
-          <Pill tone="cream">For your baby</Pill>
+          <Pill tone="cream">{L('forYourBaby')}</Pill>
           <div style={{ fontFamily: 'var(--display)', fontSize: 19, color: '#3D2840', marginTop: 8, lineHeight: 1.35, letterSpacing: '-0.01em' }}>
             {m.baby}
           </div>
@@ -68,7 +70,7 @@ function JourneyScreen({ state, setState, openScreen }) {
 
       <div style={{ padding: '12px 22px 0' }}>
         <Card style={{ background: '#FFFCF7' }}>
-          <Pill tone="lav">For your body</Pill>
+          <Pill tone="lav">{L('forYourBody')}</Pill>
           <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', marginTop: 8, lineHeight: 1.35, letterSpacing: '-0.01em' }}>
             {m.body}
           </div>
@@ -77,7 +79,7 @@ function JourneyScreen({ state, setState, openScreen }) {
 
       <div style={{ padding: '12px 22px 0', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
         <Card style={{ background: '#F2EBDA' }}>
-          <Pill tone="peach">Eat</Pill>
+          <Pill tone="peach">{L('eat')}</Pill>
           <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
             {m.eat.map((e, i) =>
             <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: '#3D2840', lineHeight: 1.35 }}>
@@ -87,7 +89,7 @@ function JourneyScreen({ state, setState, openScreen }) {
           </div>
         </Card>
         <Card style={{ background: '#F8E2DD' }}>
-          <Pill tone="pink">Avoid</Pill>
+          <Pill tone="pink">{L('avoid')}</Pill>
           <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
             {m.avoid.map((e, i) =>
             <div key={i} style={{ display: 'flex', gap: 8, fontSize: 13, color: '#3D2840', lineHeight: 1.35 }}>
@@ -104,10 +106,10 @@ function JourneyScreen({ state, setState, openScreen }) {
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ fontSize: 26, lineHeight: 1 }}>💗</div>
             <div>
-              <Pill tone="cream">Emotional weather</Pill>
+              <Pill tone="cream">{L('emotionalWeather')}</Pill>
               <div style={{ fontSize: 13, color: '#3D2840', marginTop: 8, lineHeight: 1.5 }}>
-                Feelings may swing fast this month — calm, then teary, then proud, then anxious. That's not weakness. That's hormones building a person.<br />
-                <span style={{ color: '#7A5E78' }}>If sadness lasts more than 2 weeks, please tell me. We can talk anytime.</span>
+                {L('emotionalWeatherText', 'tara')}<br />
+                <span style={{ color: '#7A5E78' }}>{L('emotionalWeatherSub', 'tara')}</span>
               </div>
             </div>
           </div>
@@ -135,8 +137,10 @@ const _delConvo = (id) => {
 
 function ChatScreen({ state, setState, openScreen }) {
   const { iconBtn, primaryBtn } = window.uiBtns;
-  const [msgs, setMsgs] = React.useState([
-    { who: 'tara', t: 'আমি Tara। কেমন আছো? / I\'m Tara. How are you feeling?', emo: 'caring' }
+  const lang = state.lang;
+  const L = (key, type) => window.tStr(key, lang, type);
+  const [msgs, setMsgs] = React.useState(() => [
+    { who: 'tara', t: window.tStr('taraOpening', lang, 'tara'), emo: 'caring' }
   ]);
   const [input, setInput] = React.useState('');
   const [loading, setLoading] = React.useState(false);
@@ -180,13 +184,14 @@ function ChatScreen({ state, setState, openScreen }) {
     <div className="screen chat" style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%' }}>
       {showHistory && (
         <ConversationHistoryPanel
+          lang={lang}
           iconBtn={iconBtn}
           activeConvId={convId}
           onClose={() => setShowHistory(false)}
           onSelect={(c) => { setMsgs(c.messages); setConvId(c.id); setShowHistory(false); }}
           onDelete={(id) => { _delConvo(id); }}
           onNew={() => {
-            setMsgs([{ who: 'tara', t: 'আমি Tara। কেমন আছো? / I\'m Tara. How are you feeling?', emo: 'caring' }]);
+            setMsgs([{ who: 'tara', t: L('taraOpening', 'tara'), emo: 'caring' }]);
             setConvId(null);
             setShowHistory(false);
           }}
@@ -253,7 +258,7 @@ function ChatScreen({ state, setState, openScreen }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && send(input)}
-            placeholder="Tell Tara anything..."
+            placeholder={L('chatPlaceholder')}
             style={{
               flex: 1, border: 'none', outline: 'none', background: 'transparent',
               fontSize: 14, color: '#2A1A36', fontFamily: 'inherit'
@@ -316,7 +321,8 @@ function Bubble({ m, onChip }) {
 
 }
 
-function ConversationHistoryPanel({ iconBtn, activeConvId, onClose, onSelect, onDelete, onNew }) {
+function ConversationHistoryPanel({ lang, iconBtn, activeConvId, onClose, onSelect, onDelete, onNew }) {
+  const L = (key, type) => window.tStr(key, lang, type);
   const [convos, setConvos] = React.useState(_getConvos());
 
   const handleDelete = (id) => {
@@ -340,7 +346,7 @@ function ConversationHistoryPanel({ iconBtn, activeConvId, onClose, onSelect, on
         padding: '14px 18px', display: 'flex', alignItems: 'center',
         borderBottom: '1px solid rgba(61,40,64,0.08)'
       }}>
-        <div style={{ flex: 1, fontFamily: 'var(--display)', fontSize: 20, color: '#3D2840', letterSpacing: '-0.01em' }}>Conversations</div>
+        <div style={{ flex: 1, fontFamily: 'var(--display)', fontSize: 20, color: '#3D2840', letterSpacing: '-0.01em' }}>{L('conversations')}</div>
         <button onClick={onClose} style={{ ...iconBtn, width: 36, height: 36 }}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3D2840" strokeWidth="2" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
         </button>
@@ -352,12 +358,12 @@ function ConversationHistoryPanel({ iconBtn, activeConvId, onClose, onSelect, on
         display: 'flex', alignItems: 'center', gap: 10
       }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#FFF1E4" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-        <span style={{ fontSize: 14, fontWeight: 600, color: '#FFF1E4' }}>New conversation</span>
+        <span style={{ fontSize: 14, fontWeight: 600, color: '#FFF1E4' }}>{L('newConversation')}</span>
       </button>
       <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
         {convos.length === 0 ? (
           <div style={{ padding: '50px 24px', textAlign: 'center', color: '#7A5E78', fontSize: 14, lineHeight: 1.6 }}>
-            No conversations found
+            {L('noConversations')}
           </div>
         ) : convos.map((c) => {
           const isActive = c.id === activeConvId;
@@ -452,6 +458,8 @@ function pickResponse(week, mood) {
 }
 
 function VoiceScreen({ state, setState, openScreen }) {
+  const lang = state.lang;
+  const L = (key, type) => window.tStr(key, lang, type);
   const [phase, setPhase] = React.useState('listening');
   const [transcript, setTranscript] = React.useState('');
   const [taraText, setTaraText] = React.useState(null);
@@ -730,7 +738,7 @@ function VoiceScreen({ state, setState, openScreen }) {
           display: 'flex', alignItems: 'center', gap: 6,
         }}>
           <span style={{ width: 6, height: 6, borderRadius: 99, background: phase === 'speaking' ? '#F08A6E' : '#F4B4C8' }} />
-          {isMuted ? 'muted' : phase === 'listening' ? 'listening' : 'speaking'}
+          {isMuted ? L('mutedLabel') : phase === 'listening' ? L('listeningLabel') : L('speakingLabel')}
         </div>
         <div style={{
           width: 36, height: 36, borderRadius: 99,
@@ -756,16 +764,16 @@ function VoiceScreen({ state, setState, openScreen }) {
           {phase === 'listening' ? (
             <>
               <div style={{ fontFamily: 'var(--display)', fontSize: 22, color: '#FFF1E4', lineHeight: 1.3, letterSpacing: '-0.01em' }}>
-                {transcript ? `"${transcript}"` : '"বলুন — আমি শুনছি..."'}
+                {transcript ? `"${transcript}"` : L('sayAnything', 'tara')}
               </div>
               <div style={{ fontSize: 12, color: 'rgba(255,241,228,0.65)', marginTop: 12 }}>
-                {transcript ? "You're talking · I'm listening carefully" : 'Say something — I\'m listening'}
+                {transcript ? L('youTalking', 'tara') : L('saySmth', 'tara')}
               </div>
             </>
           ) : (
             <>
               <div style={{ fontFamily: 'var(--display)', fontSize: 22, color: '#FFF1E4', lineHeight: 1.3, letterSpacing: '-0.01em' }}>
-                {taraText ? `"${taraText.bn}"` : '"...আমি ভাবছি..."'}
+                {taraText ? `"${taraText.bn}"` : L('taraThinking', 'tara')}
               </div>
               {taraText && (
                 <div style={{ fontSize: 13, color: 'rgba(255,241,228,0.72)', marginTop: 12, fontStyle: 'italic', lineHeight: 1.4 }}>
@@ -788,7 +796,7 @@ function VoiceScreen({ state, setState, openScreen }) {
           backdropFilter: 'blur(20px)',
           border: '1px solid rgba(255,255,255,0.12)', background: 'rgb(140, 63, 63)',
         }}>
-          <VoiceBtn label={isMuted ? 'Unmute' : 'Mute'} icon="mute" active={isMuted} onClick={handleMute} />
+          <VoiceBtn label={isMuted ? L('unmute') : L('mute')} icon="mute" active={isMuted} onClick={handleMute} />
           <button onClick={handleEnd} style={{
             width: 64, height: 64, borderRadius: 99, border: 'none',
             background: 'linear-gradient(135deg, #F08A6E, #F4B4C8)',
@@ -797,7 +805,7 @@ function VoiceScreen({ state, setState, openScreen }) {
           }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFF1E4" strokeWidth="2.4" strokeLinecap="round"><path d="M6 6l12 12M6 18L18 6" /></svg>
           </button>
-          <VoiceBtn label="Speaker" icon="spk" active={isSpeakerOn} onClick={handleSpeaker} />
+          <VoiceBtn label={L('speaker')} icon="spk" active={isSpeakerOn} onClick={handleSpeaker} />
         </div>
         <div style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.55)', marginTop: 10 }}>
           Tap × to end · everything stays private to you and Tara

@@ -152,6 +152,8 @@ function AppHeader({ onSettings, onProfile, t }) {
 // ──────────────────────────────────────────────────────────────────
 function ProfileScreen({ state, setState, openScreen, tweak, setTweak, onLogout }) {
   const { primaryBtn, ghostBtn, iconBtn } = window.uiBtns;
+  const lang = tweak.lang;
+  const L = (key, type) => window.tStr(key, lang, type);
 
   // load persisted user data; fall back to tweak values for prototype compatibility
   const storedUser = React.useMemo(() => {
@@ -181,7 +183,7 @@ function ProfileScreen({ state, setState, openScreen, tweak, setTweak, onLogout 
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3D2840" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <div style={{ fontFamily: 'var(--display)', fontSize: 22, color: '#2A1A36', letterSpacing: '-0.01em' }}>
-          Your profile
+          {L('yourProfile')}
         </div>
       </div>
 
@@ -202,7 +204,7 @@ function ProfileScreen({ state, setState, openScreen, tweak, setTweak, onLogout 
             {displayName}
           </div>
           <div style={{ fontSize: 12, color: '#5A3E5F', marginTop: 4 }}>
-            Mother-to-be · Week {displayWeek}
+            {L('motherToBe')} · Week {displayWeek}
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 12 }}>
             <Pill tone="cream">🥭 Mango size</Pill>
@@ -241,13 +243,13 @@ function ProfileScreen({ state, setState, openScreen, tweak, setTweak, onLogout 
         </div>
         <Card style={{ padding: 0 }}>
           {[
-            { label: 'Name',                value: displayName,  icon: '👤' },
-            { label: 'Pregnancy week',      value: `Week ${displayWeek}`, icon: '🌱' },
-            { label: 'Age',                 value: displayAge,   icon: '🎂' },
-            { label: 'City',                value: displayCity,  icon: '📍' },
-            { label: 'Blood group',         value: displayBlood, icon: '🩸' },
-            { label: 'First pregnancy',     value: displayFirst, icon: '✨' },
-            { label: 'Language preference', value: displayLang === 'bn' ? 'বাংলা' : displayLang === 'en' ? 'English' : 'Mixed', icon: '🌐' },
+            { label: L('fieldName'),      value: displayName,  icon: '👤' },
+            { label: L('fieldWeek'),      value: `Week ${displayWeek}`, icon: '🌱' },
+            { label: L('fieldAge'),       value: displayAge,   icon: '🎂' },
+            { label: L('fieldCity'),      value: displayCity,  icon: '📍' },
+            { label: L('fieldBlood'),     value: displayBlood, icon: '🩸' },
+            { label: L('fieldFirstPreg'), value: displayFirst, icon: '✨' },
+            { label: L('fieldLang'),      value: displayLang === 'bn' ? 'বাংলা' : displayLang === 'en' ? 'English' : 'Mixed', icon: '🌐' },
           ].map((f, i, arr) => (
             <div key={f.label} style={{
               display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
@@ -337,6 +339,8 @@ function ProfileScreen({ state, setState, openScreen, tweak, setTweak, onLogout 
 // ──────────────────────────────────────────────────────────────────
 function SettingsScreen({ state, setState, openScreen, tweak, setTweak, onLogout }) {
   const { iconBtn } = window.uiBtns;
+  const lang = tweak.lang;
+  const L = (key, type) => window.tStr(key, lang, type);
   const [notifications, setNotif] = React.useState({ daily: true, kicks: true, meds: true, mood: false });
   const [voice, setVoice] = React.useState({ wake: true, tone: 'warm' });
   const [confirmLogout, setConfirmLogout] = React.useState(false);
@@ -355,21 +359,21 @@ function SettingsScreen({ state, setState, openScreen, tweak, setTweak, onLogout
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3D2840" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <div style={{ fontFamily: 'var(--display)', fontSize: 22, color: '#2A1A36', letterSpacing: '-0.01em' }}>
-          Settings
+          {L('settingsTitle')}
         </div>
       </div>
 
       {/* LANGUAGE — the headline setting */}
       <div style={{ padding: '14px 22px 0' }}>
         <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8, padding: '0 4px' }}>
-          Language
+          {L('sectionLanguage')}
         </div>
         <Card style={{ background: 'linear-gradient(135deg, #FBE5D6, #F4D7E5)', padding: 18 }}>
           <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', letterSpacing: '-0.01em' }}>
-            How should Tara talk to you?
+            {L('howShouldTaraTalk')}
           </div>
           <div style={{ fontSize: 12, color: '#5A3E5F', marginTop: 4 }}>
-            Switch anytime · she understands both
+            {L('switchAnytime')}
           </div>
           {/* segmented control */}
           <div style={{
@@ -414,14 +418,14 @@ function SettingsScreen({ state, setState, openScreen, tweak, setTweak, onLogout
       {/* Notifications */}
       <div style={{ padding: '16px 22px 0' }}>
         <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8, padding: '0 4px' }}>
-          Notifications
+          {L('sectionNotifications')}
         </div>
         <Card style={{ padding: 0 }}>
           {[
-            { k: 'daily', l: "Tara's daily check-in", s: "9:00 AM · we'll start the day together" },
-            { k: 'kicks', l: 'Kick count reminders', s: 'Evenings after dinner' },
-            { k: 'meds', l: 'Iron + folic acid reminder', s: 'After lunch' },
-            { k: 'mood', l: 'Mood check-ins', s: 'Twice a week' },
+            { k: 'daily', l: L('notifDaily'),   s: L('notifDailySub') },
+            { k: 'kicks', l: L('notifKicks'),   s: L('notifKicksSub') },
+            { k: 'meds',  l: L('notifMeds'),    s: L('notifMedsSub') },
+            { k: 'mood',  l: L('notifMood'),    s: L('notifMoodSub') },
           ].map((it, i, arr) => (
             <ToggleRow key={it.k} title={it.l} sub={it.s} on={notifications[it.k]} onChange={v => setNotif(n => ({ ...n, [it.k]: v }))} last={i === arr.length - 1}/>
           ))}
@@ -431,10 +435,10 @@ function SettingsScreen({ state, setState, openScreen, tweak, setTweak, onLogout
       {/* Voice + appearance */}
       <div style={{ padding: '16px 22px 0' }}>
         <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: 8, padding: '0 4px' }}>
-          Voice & appearance
+          {L('sectionVoice')}
         </div>
         <Card style={{ padding: 0 }}>
-          <ToggleRow title="Wake on 'Hi Tara'" sub="Listen even when app is closed" on={voice.wake} onChange={v => setVoice(s => ({ ...s, wake: v }))}/>
+          <ToggleRow title={L('wakeOnHiTara')} sub={L('wakeOnHiTaraSub')} on={voice.wake} onChange={v => setVoice(s => ({ ...s, wake: v }))}/>
           <Row title="Tara's voice tone" value="Warm & soft">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A8595" strokeWidth="2" strokeLinecap="round"><path d="M9 6l6 6-6 6"/></svg>
           </Row>
@@ -569,17 +573,19 @@ function Row({ title, value, children, last }) {
 // ──────────────────────────────────────────────────────────────────
 function RiskScreen({ state, setState, openScreen }) {
   const { iconBtn, primaryBtn } = window.uiBtns;
+  const lang = state.lang;
+  const L = (key, type) => window.tStr(key, lang, type);
   const SYMPTOMS = [
-    { k: 'headache', l: 'Bad headache', w: 2, c: '🤕' },
-    { k: 'swelling', l: 'Sudden swelling in face/hands', w: 4, c: '🫆' },
-    { k: 'vision', l: 'Blurry vision', w: 4, c: '👁️' },
-    { k: 'bleeding', l: 'Any bleeding', w: 5, c: '🩸' },
-    { k: 'pain', l: 'Sharp abdominal pain', w: 4, c: '⚡' },
-    { k: 'fever', l: 'Fever > 38°C', w: 3, c: '🌡️' },
-    { k: 'kicks', l: 'Baby moving less today', w: 3, c: '🤰' },
-    { k: 'nausea', l: 'Cannot keep food down', w: 2, c: '🤢' },
-    { k: 'breath', l: 'Trouble breathing', w: 4, c: '😮‍💨' },
-    { k: 'mood', l: 'Feeling very low / hopeless', w: 3, c: '🌧️' },
+    { k: 'headache', lKey: 'symHeadache', w: 2, c: '🤕' },
+    { k: 'swelling', lKey: 'symSwelling', w: 4, c: '🫆' },
+    { k: 'vision',   lKey: 'symVision',   w: 4, c: '👁️' },
+    { k: 'bleeding', lKey: 'symBleeding', w: 5, c: '🩸' },
+    { k: 'pain',     lKey: 'symPain',     w: 4, c: '⚡' },
+    { k: 'fever',    lKey: 'symFever',    w: 3, c: '🌡️' },
+    { k: 'kicks',    lKey: 'symKicks',    w: 3, c: '🤰' },
+    { k: 'nausea',   lKey: 'symNausea',   w: 2, c: '🤢' },
+    { k: 'breath',   lKey: 'symBreath',   w: 4, c: '😮‍💨' },
+    { k: 'mood',     lKey: 'symMood',     w: 3, c: '🌧️' },
   ];
   const [sel, setSel] = React.useState({});
   const [submitted, setSubmitted] = React.useState(false);
@@ -587,12 +593,12 @@ function RiskScreen({ state, setState, openScreen }) {
   const score = Object.entries(sel).reduce((acc, [k, on]) => acc + (on ? SYMPTOMS.find(s => s.k === k).w : 0), 0);
   const level = score === 0 ? 'safe' : score <= 3 ? 'low' : score <= 7 ? 'moderate' : 'high';
   const levelMap = {
-    safe:     { label: 'All clear',      tone: 'linear-gradient(135deg, #E6F1DC, #DDEEFF)', dot: '#7BC894', taraMood: 'happy', msg: "Nothing flagged today. Keep doing what you're doing 🌸" },
-    low:      { label: 'Low concern',    tone: 'linear-gradient(135deg, #F2EBDA, #FBE5D6)', dot: '#E5A064', taraMood: 'idle', msg: 'Probably normal pregnancy discomfort. Watch how it changes today.' },
-    moderate: { label: 'Worth a call',   tone: 'linear-gradient(135deg, #FBD6CB, #F4D7E5)', dot: '#E5773A', taraMood: 'worried', msg: 'Please tell your doctor today. Not urgent, but not ignoring either.' },
-    high:     { label: 'Call now',       tone: 'linear-gradient(135deg, #F8C9C0, #F4A4B8)', dot: '#D14040', taraMood: 'worried', msg: 'This needs care right away. Tara will help you make the call.' },
+    safe:     { label: L('riskLabelSafe'),     tone: 'linear-gradient(135deg, #E6F1DC, #DDEEFF)', dot: '#7BC894', taraMood: 'happy',   msg: L('riskSafe', 'tara') },
+    low:      { label: L('riskLabelLow'),      tone: 'linear-gradient(135deg, #F2EBDA, #FBE5D6)', dot: '#E5A064', taraMood: 'idle',    msg: L('riskLow', 'tara') },
+    moderate: { label: L('riskLabelModerate'), tone: 'linear-gradient(135deg, #FBD6CB, #F4D7E5)', dot: '#E5773A', taraMood: 'worried', msg: L('riskModerate', 'tara') },
+    high:     { label: L('riskLabelHigh'),     tone: 'linear-gradient(135deg, #F8C9C0, #F4A4B8)', dot: '#D14040', taraMood: 'worried', msg: L('riskHigh', 'tara') },
   };
-  const L = levelMap[level];
+  const lvl = levelMap[level];
 
   const toggle = (k) => setSel(s => ({ ...s, [k]: !s[k] }));
   const reset = () => { setSel({}); setSubmitted(false); };
@@ -604,29 +610,29 @@ function RiskScreen({ state, setState, openScreen }) {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3D2840" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
         </button>
         <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>For your safety</div>
+          <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{L('forYourSafety')}</div>
           <div style={{ fontFamily: 'var(--display)', fontSize: 22, color: '#2A1A36', letterSpacing: '-0.01em', lineHeight: 1.1 }}>
-            Risk analyser
+            {L('riskAnalyser')}
           </div>
         </div>
         <button onClick={reset} style={{
           padding: '6px 12px', borderRadius: 99, border: '1px solid rgba(61,40,64,0.15)',
           background: 'transparent', color: '#5A3E5F', cursor: 'pointer', fontSize: 11, fontWeight: 600,
-        }}>Reset</button>
+        }}>{L('reset')}</button>
       </div>
 
       {/* meter */}
       <div style={{ padding: '8px 22px 0' }}>
-        <Card style={{ background: L.tone, padding: 20 }}>
+        <Card style={{ background: lvl.tone, padding: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <Tara size={92} mood={L.taraMood}/>
+            <Tara size={92} mood={lvl.taraMood}/>
             <div style={{ flex: 1 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ width: 10, height: 10, borderRadius: 99, background: L.dot }}/>
-                <span style={{ fontSize: 11, color: '#5A3E5F', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{L.label}</span>
+                <span style={{ width: 10, height: 10, borderRadius: 99, background: lvl.dot }}/>
+                <span style={{ fontSize: 11, color: '#5A3E5F', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{lvl.label}</span>
               </div>
               <div style={{ fontFamily: 'var(--display)', fontSize: 22, color: '#3D2840', marginTop: 4, letterSpacing: '-0.01em', lineHeight: 1.2 }}>
-                {L.msg}
+                {lvl.msg}
               </div>
             </div>
           </div>
@@ -641,7 +647,7 @@ function RiskScreen({ state, setState, openScreen }) {
             ))}
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 9, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.04em' }}>
-            <span>Safe</span><span>Low</span><span>Moderate</span><span>High</span>
+            <span>{L('riskLabelSafe')}</span><span>{L('riskLabelLow')}</span><span>{L('riskLabelModerate')}</span><span>{L('riskLabelHigh')}</span>
           </div>
         </Card>
       </div>
@@ -650,9 +656,9 @@ function RiskScreen({ state, setState, openScreen }) {
       <div style={{ padding: '16px 22px 0' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
           <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', letterSpacing: '-0.01em' }}>
-            What are you feeling today?
+            {L('whatAreYouFeeling')}
           </div>
-          <div style={{ fontSize: 11, color: '#7A5E78' }}>Tap all that apply</div>
+          <div style={{ fontSize: 11, color: '#7A5E78' }}>{L('tapAllThatApply')}</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           {SYMPTOMS.map(sym => {
@@ -669,7 +675,7 @@ function RiskScreen({ state, setState, openScreen }) {
                 boxShadow: on ? '0 6px 16px -8px rgba(61,40,64,0.4)' : '0 1px 0 rgba(255,255,255,0.9) inset',
               }}>
                 <span style={{ fontSize: 18 }}>{sym.c}</span>
-                <span style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.2, flex: 1 }}>{sym.l}</span>
+                <span style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.2, flex: 1 }}>{L(sym.lKey)}</span>
                 {on && (
                   <span style={{ width: 16, height: 16, borderRadius: 99, background: '#F08A6E', display: 'grid', placeItems: 'center' }}>
                     <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="#FFF1E4" strokeWidth="2.4" strokeLinecap="round"><path d="M2 6.5 L5 9 L10 3"/></svg>
@@ -684,7 +690,7 @@ function RiskScreen({ state, setState, openScreen }) {
       {/* vitals quick check */}
       <div style={{ padding: '16px 22px 0' }}>
         <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', marginBottom: 8, letterSpacing: '-0.01em' }}>
-          Today's readings
+          {L('todaysReadings')}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
           {[
@@ -719,7 +725,7 @@ function RiskScreen({ state, setState, openScreen }) {
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
               <button style={{ ...primaryBtn, background: '#F08A6E', flex: 1 }}>
-                {level === 'high' ? '☎️ Call doctor now' : '💬 Tell my doctor'}
+                {level === 'high' ? ('☎️ ' + L('callDoctor')) : ('💬 ' + (lang === 'bn' ? 'ডাক্তারকে বলুন' : 'Tell my doctor'))}
               </button>
               <button style={{ ...primaryBtn, background: 'rgba(255,241,228,0.15)', color: '#FFF1E4', flex: 1 }}>
                 Talk to Tara
@@ -739,10 +745,10 @@ function RiskScreen({ state, setState, openScreen }) {
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           boxShadow: '0 14px 30px -10px rgba(61,40,64,0.5)',
         }}>
-          <span>✨</span> Analyse with Maya AI
+          <span>✨</span> {L('analyseButton')}
         </button>
         <div style={{ fontSize: 10, color: '#7A5E78', textAlign: 'center', marginTop: 8, lineHeight: 1.5 }}>
-          Not a medical diagnosis · always call your doctor for emergencies
+          {L('notMedical')}
         </div>
       </div>
     </div>

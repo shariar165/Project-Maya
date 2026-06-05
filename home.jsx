@@ -115,9 +115,10 @@ function Waveform({ playing = true, bars = 24, color = '#3D2840' }) {
 // ──────────────────────────────────────────────────────────────────
 function HomeScreen({ state, setState, openScreen }) {
   const { week, name, lang, mood } = state;
+  const L = (key, type) => window.tStr(key, lang, type);
   const taraRef = React.useRef(null);
   const fruit = WEEK_FRUITS[Math.min(40, Math.max(1, week))];
-  const trimester = week <= 13 ? 'First trimester' : week <= 27 ? 'Second trimester' : 'Third trimester';
+  const trimester = L(week <= 13 ? 'trimester1' : week <= 27 ? 'trimester2' : 'trimester3');
   const monthFromWeek = Math.min(9, Math.ceil(week / 4.345));
   const [proactiveMsg, setProactiveMsg] = React.useState(null);
 
@@ -150,7 +151,7 @@ function HomeScreen({ state, setState, openScreen }) {
               Tuesday · 14 May · Week {week}
             </div>
             <div style={{ fontFamily: 'var(--display)', fontSize: 26, lineHeight: 1.1, color: '#2A1A36', marginTop: 4, letterSpacing: '-0.02em' }}>
-              <span style={{ display: 'block' }}>শুভ সকাল,</span>
+              <span style={{ display: 'block' }}>{L('greeting', 'tara')},</span>
               <span style={{ fontStyle: 'italic' }}>{name}</span>
             </div>
           </div>
@@ -173,7 +174,7 @@ function HomeScreen({ state, setState, openScreen }) {
 
           <div style={{ display: 'flex', gap: 8 }}>
             <Pill tone="cream">
-              <span style={{ width: 6, height: 6, borderRadius: 99, background: '#7BC894' }} /> Tara is here
+              <span style={{ width: 6, height: 6, borderRadius: 99, background: '#7BC894' }} /> {L('taraIsHere', 'tara')}
             </Pill>
             <Pill tone="cream">Week {week} · {trimester}</Pill>
           </div>
@@ -184,7 +185,7 @@ function HomeScreen({ state, setState, openScreen }) {
                 {proactiveMsg ? `"${proactiveMsg.message}"` : '"আজ আপনি একটু ক্লান্ত মনে হচ্ছেন। চলুন এক গ্লাস পানি খাই —"'}
               </div>
               <div style={{ fontSize: 13, color: '#5A3E5F', marginTop: 8, lineHeight: 1.5 }}>
-                {proactiveMsg ? '— Tara' : "I'm right here with you today. Tap to talk."}
+                {proactiveMsg ? '— Tara' : L('taraHeroSub', 'tara')}
               </div>
             </div>
             <Tara ref={taraRef} size={170} mood={proactiveMsg ? (proactiveMsg.emotion || mood) : mood} />
@@ -195,14 +196,14 @@ function HomeScreen({ state, setState, openScreen }) {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
               </svg>
-              Chat with Tara
+              {L('chatWithTara')}
             </button>
             <button onClick={handleVoiceOpen} style={{ ...primaryBtn, flex: 1, background: 'rgba(255,255,255,0.5)', color: '#3D2840' }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <rect x="9" y="3" width="6" height="12" rx="3" />
                 <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
               </svg>
-              Voice
+              {L('voice')}
             </button>
           </div>
         </div>
@@ -217,16 +218,16 @@ function HomeScreen({ state, setState, openScreen }) {
               <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
                 <div style={{ textAlign: 'center', lineHeight: 1 }}>
                   <div style={{ fontFamily: 'var(--display)', fontSize: 22, color: '#3D2840' }}>{week}</div>
-                  <div style={{ fontSize: 9, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.08em' }}>WEEK</div>
+                  <div style={{ fontSize: 9, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.08em' }}>{L('week').toUpperCase()}</div>
                 </div>
               </div>
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Baby this week
+                {L('babyThisWeek')}
               </div>
               <div style={{ fontFamily: 'var(--display)', fontSize: 20, color: '#3D2840', marginTop: 2, letterSpacing: '-0.01em' }}>
-                The size of a {fruit.name}
+                {L('sizeOfA')} {fruit.name}
               </div>
               <div style={{ fontSize: 12, color: '#5A3E5F', marginTop: 4, lineHeight: 1.5 }}>
                 {fruit.note}
@@ -237,9 +238,9 @@ function HomeScreen({ state, setState, openScreen }) {
           <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(61,40,64,0.1), transparent)' }} />
           <div style={{ display: 'flex', padding: '12px 18px', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontSize: 12, color: '#5A3E5F' }}>
-              Month {monthFromWeek} of 9 · <span style={{ color: '#3D2840', fontWeight: 600 }}>{40 - week} weeks to go</span>
+              {L('monthOf9').replace('{n}', monthFromWeek)} · <span style={{ color: '#3D2840', fontWeight: 600 }}>{L('weeksToGo').replace('{n}', 40 - week)}</span>
             </div>
-            <button onClick={() => openScreen('journey')} style={ghostBtn}>This month →</button>
+            <button onClick={() => openScreen('journey')} style={ghostBtn}>{L('thisMonth')}</button>
           </div>
         </Card>
       </div>
@@ -248,7 +249,7 @@ function HomeScreen({ state, setState, openScreen }) {
       <div style={{ padding: '16px 22px 0' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
           <div style={{ fontFamily: 'var(--display)', fontSize: 20, color: '#3D2840', letterSpacing: '-0.01em' }}>
-            Today's care
+            {L('todaysCare')}
           </div>
           <div style={{ fontSize: 12, color: '#7A5E78' }}>
             {Object.values(checks).filter(Boolean).length}/{Object.values(checks).length}
@@ -256,10 +257,10 @@ function HomeScreen({ state, setState, openScreen }) {
         </div>
         <Card style={{ padding: 6 }}>
           {[
-          { k: 'water', label: 'Drink 8 glasses of water', sub: '6 of 8 today', icon: '💧', tone: '#DDEEFF' },
-          { k: 'iron', label: 'Take iron + folic acid', sub: 'After lunch', icon: '🌿', tone: '#E6F1DC' },
-          { k: 'walk', label: '15-minute gentle walk', sub: 'Around sunset is best', icon: '🚶🏽‍♀️', tone: '#FBE5D6' },
-          { k: 'kicks', label: 'Count baby kicks', sub: 'Try after dinner', icon: '👣', tone: '#F4DEEC' }].
+          { k: 'water', label: L('checkWater'), sub: L('checkWaterSub'), icon: '💧', tone: '#DDEEFF' },
+          { k: 'iron',  label: L('checkIron'),  sub: L('checkIronSub'),  icon: '🌿', tone: '#E6F1DC' },
+          { k: 'walk',  label: L('checkWalk'),  sub: L('checkWalkSub'),  icon: '🚶🏽‍♀️', tone: '#FBE5D6' },
+          { k: 'kicks', label: L('checkKicks'), sub: L('checkKicksSub'), icon: '👣', tone: '#F4DEEC' }].
           map((it, i, arr) =>
           <button key={it.k} onClick={() => toggleCheck(it.k)} style={{
             display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
@@ -293,7 +294,7 @@ function HomeScreen({ state, setState, openScreen }) {
           <div style={{ padding: '8px 12px 4px', display: 'flex', alignItems: 'center', gap: 8 }}>
               <Tara size={40} mood="celebrate" />
               <div style={{ fontSize: 12, color: '#3D2840', fontWeight: 600 }}>
-                Tara is so proud of you today! 🌸
+                {L('taraProud', 'tara')}
               </div>
             </div>
           }
@@ -303,12 +304,12 @@ function HomeScreen({ state, setState, openScreen }) {
       {/* eat / avoid */}
       <div style={{ padding: '16px 22px 0' }}>
         <div style={{ fontFamily: 'var(--display)', fontSize: 20, color: '#3D2840', marginBottom: 8, letterSpacing: '-0.01em' }}>
-          For your body today
+          {L('forYourBodyToday')}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
           <Card style={{ background: '#F2EBDA' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <Pill tone="cream">Eat</Pill>
+              <Pill tone="cream">{L('eat')}</Pill>
               <span style={{ fontSize: 22 }}>🥭</span>
             </div>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#3D2840', lineHeight: 1.3 }}>Mango, lentils, and 1 boiled egg</div>
@@ -316,7 +317,7 @@ function HomeScreen({ state, setState, openScreen }) {
           </Card>
           <Card style={{ background: '#F8E2DD' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <Pill tone="pink">Avoid</Pill>
+              <Pill tone="pink">{L('avoid')}</Pill>
               <span style={{ fontSize: 22 }}>🚫</span>
             </div>
             <div style={{ fontSize: 14, fontWeight: 700, color: '#3D2840', lineHeight: 1.3 }}>Raw papaya, strong tea</div>
@@ -335,15 +336,15 @@ function HomeScreen({ state, setState, openScreen }) {
             }}>🌬️</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'var(--display)', fontSize: 17, color: '#3D2840', letterSpacing: '-0.01em' }}>
-                A 2-minute breathing moment
+                {L('breathingTitle')}
               </div>
               <div style={{ fontSize: 12, color: '#5A3E5F', marginTop: 2 }}>
-                Tara will breathe with you. Whenever you need.
+                {L('breathingSub', 'tara')}
               </div>
             </div>
             <button onClick={() => openScreen('wellness')} style={{
               ...primaryBtn, padding: '8px 12px', fontSize: 12
-            }}>Begin</button>
+            }}>{L('begin')}</button>
           </div>
         </Card>
       </div>
@@ -363,10 +364,10 @@ function HomeScreen({ state, setState, openScreen }) {
                 <span style={{ fontSize: 10, color: 'rgba(255,241,228,0.55)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>30 sec check</span>
               </div>
               <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#FFF1E4', letterSpacing: '-0.01em', marginTop: 4 }}>
-                Risk analyser
+                {L('riskAnalyserShort')}
               </div>
               <div style={{ fontSize: 11, color: 'rgba(255,241,228,0.65)', marginTop: 2 }}>
-                Tell me how you feel — I'll tell you if it's worth a call.
+                {L('riskSubHome', 'tara')}
               </div>
             </div>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#FFF1E4" strokeWidth="2" strokeLinecap="round"><path d="M9 6l6 6-6 6" /></svg>
@@ -380,7 +381,7 @@ function HomeScreen({ state, setState, openScreen }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                Next checkup
+                {L('nextCheckup')}
               </div>
               <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', marginTop: 2, letterSpacing: '-0.01em' }}>
                 Dr. Rashida Khan · Friday
@@ -389,7 +390,7 @@ function HomeScreen({ state, setState, openScreen }) {
                 10:30 AM · Square Hospital, Dhanmondi
               </div>
             </div>
-            <button onClick={() => openScreen('care')} style={ghostBtn}>Details</button>
+            <button onClick={() => openScreen('care')} style={ghostBtn}>{L('details')}</button>
           </div>
         </Card>
       </div>

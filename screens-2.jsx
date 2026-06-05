@@ -5,6 +5,8 @@
 // ──────────────────────────────────────────────────────────────────
 function WellnessScreen({ state, setState, openScreen }) {
   const { iconBtn, primaryBtn, ghostBtn } = window.uiBtns;
+  const lang = state.lang;
+  const L = (key, type) => window.tStr(key, lang, type);
   const [breathing, setBreathing] = React.useState(false);
   const [phase, setPhase] = React.useState('in'); // in / hold / out
   const [count, setCount] = React.useState(0);
@@ -22,12 +24,12 @@ function WellnessScreen({ state, setState, openScreen }) {
   }, [breathing]);
 
   const moods = [
-    { k: 'tender', label: 'Tender', emoji: '🫶', color: '#F4D7E5' },
-    { k: 'okay',   label: 'Okay',   emoji: '🌤️', color: '#F2EBDA' },
-    { k: 'tired',  label: 'Tired',  emoji: '😴', color: '#E5D8E8' },
-    { k: 'worried',label: 'Worried',emoji: '🌧️', color: '#DDE3F0' },
-    { k: 'heavy',  label: 'Heavy',  emoji: '🪨', color: '#E8DEF5' },
-    { k: 'happy',  label: 'Happy',  emoji: '🌸', color: '#FBE5D6' },
+    { k: 'tender', label: L('moodTender'), emoji: '🫶', color: '#F4D7E5' },
+    { k: 'okay',   label: L('moodOkay'),   emoji: '🌤️', color: '#F2EBDA' },
+    { k: 'tired',  label: L('moodTired'),  emoji: '😴', color: '#E5D8E8' },
+    { k: 'worried',label: L('moodWorried'),emoji: '🌧️', color: '#DDE3F0' },
+    { k: 'heavy',  label: L('moodHeavy'),  emoji: '🪨', color: '#E8DEF5' },
+    { k: 'happy',  label: L('moodHappy'),  emoji: '🌸', color: '#FBE5D6' },
   ];
   const [mood, setMood] = React.useState('tender');
 
@@ -35,10 +37,10 @@ function WellnessScreen({ state, setState, openScreen }) {
     <div className="screen wellness">
       <div style={{ padding: '8px 22px 0' }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: '#7A5E78', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          For your heart
+          {L('forYourHeart')}
         </div>
         <div style={{ fontFamily: 'var(--display)', fontSize: 28, color: '#2A1A36', marginTop: 4, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-          How does today<br/><span style={{ fontStyle: 'italic' }}>actually feel?</span>
+          {L('howDoesToday', 'tara')}<br/><span style={{ fontStyle: 'italic' }}>{L('actuallyFeel', 'tara')}</span>
         </div>
       </div>
 
@@ -84,16 +86,16 @@ function WellnessScreen({ state, setState, openScreen }) {
               <Tara size={118} mood={breathing ? 'sleepy' : 'idle'}/>
             </div>
             <div style={{ position: 'absolute', bottom: 14, fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', letterSpacing: '-0.01em' }}>
-              {breathing ? (phase === 'in' ? 'Breathe in...' : phase === 'hold' ? 'Hold...' : 'Breathe out...') : 'Box breathing · 4·2·4'}
+              {breathing ? (phase === 'in' ? L('breatheIn') : phase === 'hold' ? L('hold') : L('breatheOut')) : L('boxBreathing')}
             </div>
           </div>
           <div style={{ padding: '12px 18px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', letterSpacing: '-0.01em' }}>
-                Breathe with Tara
+                {L('breatheWithTara', 'tara')}
               </div>
               <div style={{ fontSize: 11, color: '#5A3E5F', marginTop: 2 }}>
-                {breathing ? `Cycle ${count + 1} · keep going` : 'Tara breathes when you breathe.'}
+                {breathing ? L('cycleCount').replace('{n}', count + 1) : L('breatheSub', 'tara')}
               </div>
             </div>
             <button onClick={() => setBreathing(b => !b)} style={{
@@ -101,7 +103,7 @@ function WellnessScreen({ state, setState, openScreen }) {
               background: breathing ? 'rgba(61,40,64,0.15)' : '#3D2840',
               color: breathing ? '#3D2840' : '#FFF1E4',
             }}>
-              {breathing ? 'Pause' : 'Begin'}
+              {breathing ? L('pause') : L('begin')}
             </button>
           </div>
         </Card>
@@ -111,16 +113,16 @@ function WellnessScreen({ state, setState, openScreen }) {
       <div style={{ padding: '18px 22px 0' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
           <div style={{ fontFamily: 'var(--display)', fontSize: 20, color: '#3D2840', letterSpacing: '-0.01em' }}>
-            From Tara, for today
+            {L('fromTaraToday', 'tara')}
           </div>
-          <span style={{ fontSize: 12, color: '#7A5E78' }}>swipe →</span>
+          <span style={{ fontSize: 12, color: '#7A5E78' }}>{L('swipe')}</span>
         </div>
         <div style={{ display: 'flex', gap: 10, overflowX: 'auto', padding: '4px 0 8px', marginLeft: -2, scrollbarWidth: 'none' }}>
           {[
-            { t: 'You are growing a person.\nThat is enough today.', bg: 'linear-gradient(135deg, #FBD7C6, #F4B4C8)' },
-            { t: 'Tired is allowed.\nRest is part of caring.', bg: 'linear-gradient(135deg, #E0D5F0, #C9BEE4)' },
-            { t: 'আপনি একা নন।\nআমি সবসময় আছি।', bg: 'linear-gradient(135deg, #F2EBDA, #F4D7E5)' },
-            { t: 'Whatever you feel\nis welcome here.', bg: 'linear-gradient(135deg, #F8D5DF, #E0D5F0)' },
+            { key: 'affirmation1', bg: 'linear-gradient(135deg, #FBD7C6, #F4B4C8)' },
+            { key: 'affirmation2', bg: 'linear-gradient(135deg, #E0D5F0, #C9BEE4)' },
+            { key: 'affirmation3', bg: 'linear-gradient(135deg, #F2EBDA, #F4D7E5)' },
+            { key: 'affirmation4', bg: 'linear-gradient(135deg, #F8D5DF, #E0D5F0)' },
           ].map((a, i) => (
             <div key={i} style={{
               flex: '0 0 220px', borderRadius: 24, padding: 20, height: 140,
@@ -128,7 +130,7 @@ function WellnessScreen({ state, setState, openScreen }) {
               boxShadow: '0 18px 30px -22px rgba(61,40,64,0.4)',
             }}>
               <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', lineHeight: 1.25, letterSpacing: '-0.01em', whiteSpace: 'pre-line' }}>
-                "{a.t}"
+                "{L(a.key, 'tara')}"
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ fontSize: 10, color: '#5A3E5F', fontWeight: 700, letterSpacing: '0.1em' }}>— TARA</span>
@@ -178,6 +180,8 @@ function WellnessScreen({ state, setState, openScreen }) {
 // ──────────────────────────────────────────────────────────────────
 function CareScreen({ state, setState, openScreen }) {
   const { iconBtn, primaryBtn, ghostBtn } = window.uiBtns;
+  const lang = state.lang;
+  const L = (key, type) => window.tStr(key, lang, type);
   const [kicks, setKicks] = React.useState(7);
   const [emergency, setEmergency] = React.useState(false);
 
@@ -185,10 +189,10 @@ function CareScreen({ state, setState, openScreen }) {
     <div className="screen care">
       <div style={{ padding: '8px 22px 0' }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: '#7A5E78', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-          Care for you both
+          {L('careForBoth')}
         </div>
         <div style={{ fontFamily: 'var(--display)', fontSize: 28, color: '#2A1A36', marginTop: 4, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-          Checkups, kicks,<br/><span style={{ fontStyle: 'italic' }}>and a calm path</span>
+          {L('careTitle', 'tara')}<br/><span style={{ fontStyle: 'italic' }}>{L('careTitleItalic', 'tara')}</span>
         </div>
       </div>
 
@@ -332,10 +336,10 @@ function CareScreen({ state, setState, openScreen }) {
             }}>🆘</div>
             <div style={{ flex: 1 }}>
               <div style={{ fontFamily: 'var(--display)', fontSize: 17, color: '#3D2840', letterSpacing: '-0.01em' }}>
-                Need help, right now?
+                {L('needHelpNow', 'tara')}
               </div>
               <div style={{ fontSize: 11, color: '#5A3E5F', marginTop: 2, lineHeight: 1.5 }}>
-                Tara will guide you, step by step. No panic.
+                {L('taraGuide', 'tara')}
               </div>
             </div>
             <button onClick={() => setEmergency(e => !e)} style={{
@@ -343,17 +347,17 @@ function CareScreen({ state, setState, openScreen }) {
               background: emergency ? '#3D2840' : '#F08A6E',
               color: '#FFF1E4', fontSize: 12, fontWeight: 700, cursor: 'pointer', letterSpacing: '0.02em',
             }}>
-              {emergency ? 'Hide' : 'I need help'}
+              {emergency ? L('hide') : L('iNeedHelp')}
             </button>
           </div>
           {emergency && (
             <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[
-                { i: '🩸', l: 'I see bleeding', c: '#F08A6E' },
-                { i: '💧', l: 'My water broke', c: '#A88DD1' },
-                { i: '⚡', l: 'Sharp or constant pain', c: '#E5A064' },
-                { i: '🤱', l: 'Baby hasn\'t moved in hours', c: '#D17BB0' },
-                { i: '☎️', l: 'Just call my doctor now', c: '#3D2840' },
+                { i: '🩸', lKey: 'bleeding',      c: '#F08A6E' },
+                { i: '💧', lKey: 'waterBroke',    c: '#A88DD1' },
+                { i: '⚡', lKey: 'sharpPain',     c: '#E5A064' },
+                { i: '🤱', lKey: 'babyNotMoved',  c: '#D17BB0' },
+                { i: '☎️', lKey: 'callDoctor',    c: '#3D2840' },
               ].map(opt => (
                 <button key={opt.l} style={{
                   display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
@@ -364,12 +368,12 @@ function CareScreen({ state, setState, openScreen }) {
                     width: 32, height: 32, borderRadius: 12, background: opt.c,
                     color: '#FFF1E4', display: 'grid', placeItems: 'center', fontSize: 14,
                   }}>{opt.i}</div>
-                  <div style={{ flex: 1, fontSize: 13, color: '#2A1A36', fontWeight: 600 }}>{opt.l}</div>
+                  <div style={{ flex: 1, fontSize: 13, color: '#2A1A36', fontWeight: 600 }}>{L(opt.lKey)}</div>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3D2840" strokeWidth="2" strokeLinecap="round"><path d="M9 6l6 6-6 6"/></svg>
                 </button>
               ))}
               <div style={{ fontSize: 11, color: '#5A3E5F', padding: '6px 4px', lineHeight: 1.5 }}>
-                Tara stays calm with you. We'll get you safe.
+                {L('taraStaysCalm', 'tara')}
               </div>
             </div>
           )}
