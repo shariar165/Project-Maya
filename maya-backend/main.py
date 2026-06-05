@@ -124,6 +124,7 @@ class AskRequest(BaseModel):
     patient_id: str
     message:    str
     source:     str = "chat"
+    context:    list = []
 
 class TTSRequest(BaseModel):
     text: str
@@ -393,7 +394,7 @@ async def ask(req: AskRequest, authorization: Optional[str] = Header(None)):
             "user_message":         req.message,
             "source":               req.source,
             "patient_profile":      {},
-            "conversation_history": [],
+            "conversation_history": req.context if is_guest else [],
             "intent":               "",
             "agent_used":           "",
             "retrieved_chunks":     [],

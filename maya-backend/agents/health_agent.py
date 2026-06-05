@@ -61,8 +61,13 @@ def health_node(state: MayaState) -> MayaState:
         history=history_text,
     )
 
+    messages = [
+        {"role": "user" if h["role"] == "user" else "assistant", "content": h["content"]}
+        for h in state.get("conversation_history", [])
+    ] + [{"role": "user", "content": state["user_message"]}]
+
     raw    = call_llm_with_fallback(
-        messages=[{"role": "user", "content": state["user_message"]}],
+        messages=messages,
         system=prompt,
         max_tokens=400,
     )

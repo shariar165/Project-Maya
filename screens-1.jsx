@@ -7,19 +7,107 @@ function JourneyScreen({ state, setState, openScreen }) {
   const { iconBtn, primaryBtn, ghostBtn } = window.uiBtns;
   const lang = state.lang;
   const L = (key, type) => window.tStr(key, lang, type);
-  const monthFromWeek = Math.min(9, Math.ceil(state.week / 4.345));
+  const monthFromWeek = state.week <= 40
+    ? Math.min(9, Math.ceil(state.week / 4.345))
+    : Math.min(12, 9 + Math.ceil((state.week - 40) / 4));
   const [active, setActive] = React.useState(monthFromWeek);
 
   const months = [
-  { n: 1, tKey: 'monthTitle1', accent: '#FCE0D4', tara: 'sleepy', body: 'You may feel very tired — please rest often.', baby: "Baby's heart starts beating around week 6.", eat: ['Folic acid daily', 'Fresh fruits', 'Yogurt + nuts'], avoid: ['Raw fish or eggs', 'Soft cheese', 'Smoking around you'] },
-  { n: 2, tKey: 'monthTitle2', accent: '#FBD6CB', tara: 'idle', body: 'Morning nausea is normal. Eat small meals.', baby: 'Tiny arm and leg buds are forming.', eat: ['Ginger tea', 'Crackers in the morning', 'Lentils'], avoid: ['Strong perfumes', 'Long bus rides', 'Skipping meals'] },
-  { n: 3, tKey: 'monthTitle3', accent: '#F8CCD9', tara: 'happy', body: 'Energy may return. First scan this month.', baby: 'Fingers, toes, eyelids forming.', eat: ['Spinach + beef liver', 'Eggs', 'Citrus fruits'], avoid: ['Heavy lifting', 'Hot baths', 'Self-medicating'] },
-  { n: 4, tKey: 'monthTitle4', accent: '#F1C7DA', tara: 'happy', body: 'You may feel calmer. Belly starts to show.', baby: "Baby can hear muffled sounds now.", eat: ['Dal + rice', 'Milk daily', 'Seasonal fruits'], avoid: ['Caffeine > 1 cup', 'Sleeping on back', 'Late-night junk'] },
-  { n: 5, tKey: 'monthTitle5', accent: '#EBC0E0', tara: 'celebrate', body: 'You may feel the first soft flutters.', baby: 'Baby starts kicking and turning.', eat: ['Calcium-rich foods', 'Whole grains', 'Sweet potato'], avoid: ['Long standing', 'Tight clothes', 'Skipping checkups'] },
-  { n: 6, tKey: 'monthTitle6', accent: '#E0D5F0', tara: 'listening', body: 'Talk and sing to baby — they hear you.', baby: 'Eyelids open, eyebrows growing.', eat: ['Iron-rich greens', 'Plenty of water', 'Nuts + seeds'], avoid: ['Stress where you can', 'Heavy spices', 'Long travel'] },
-  { n: 7, tKey: 'monthTitle7', accent: '#D6CCEC', tara: 'idle', body: 'Backaches may begin. Use a pillow at night.', baby: 'Baby practices breathing motions.', eat: ['Omega-3 rich fish (cooked)', 'Almonds', 'Bananas'], avoid: ['Sleeping on right side long', 'Heavy housework', 'Tight belts'] },
-  { n: 8, tKey: 'monthTitle8', accent: '#E5D8E8', tara: 'idle', body: 'Swelling in feet is common. Elevate them.', baby: 'Baby gains weight quickly now.', eat: ['Low-salt meals', 'Fresh fruit', 'Coconut water'], avoid: ['Standing > 30 min', 'Long car rides', 'Forgetting kick counts'] },
-  { n: 9, tKey: 'monthTitle9', accent: '#FBD6CB', tara: 'celebrate', body: 'Pack your bag. Rest, eat, breathe.', baby: 'Baby is full term, ready to meet you.', eat: ['Dates (helps labor!)', 'Small frequent meals', 'Warm soup'], avoid: ['Panic — Tara is here', 'Being alone far from help', 'Skipping signs of labor'] }];
+  { n: 1, tKey: 'monthTitle1', accent: '#FCE0D4', tara: 'sleepy',
+    body: 'You may feel very tired and dizzy. Nausea may begin soon. Your uterus is the size of a grape. Rest often and do not skip meals.',
+    baby: "Baby's heart starts beating around week 6. The tiny neural tube forms in weeks 3–4 — folic acid protects it. All major organs begin forming.",
+    eat: ['Folic acid 400 mcg daily (essential)', 'Kola, malta, palong shak for folate', 'Dal, eggs, yogurt for protein'],
+    avoid: ['Alcohol and smoking — zero', 'Raw fish, eggs, or half-cooked meat', 'Soft unpasteurised cheese'],
+    exercise: 'Gentle 20–30 min walk daily. Light stretching is safe. Avoid new heavy workouts.',
+    tasks: ['Confirm pregnancy with a doctor', 'Book your first ANC visit', 'Start folic acid supplement immediately'] },
+
+  { n: 2, tKey: 'monthTitle2', accent: '#FBD6CB', tara: 'idle',
+    body: 'Morning nausea peaks — eat small, frequent meals. Dry muri or biscuit helps. Breasts may feel tender and heavy.',
+    baby: 'Tiny arm and leg buds are forming. Heart beats ~150 times/min. Baby is the size of a kidney bean (~1.5 cm).',
+    eat: ['Ginger tea (আদা চা) for nausea', 'Dry crackers or muri in the morning', 'Lentils, eggs, fish for protein'],
+    avoid: ['Oily or very heavy food', 'Raw papaya and large amounts of pineapple', 'Skipping meals even when nauseous'],
+    exercise: 'Walking and gentle stretching. Rest freely when tired — your body is working hard.',
+    tasks: ['First ultrasound / dating scan', 'Blood tests: Hb, blood group, sugar, HBsAg, syphilis', 'Safe dental checkup — best time is T1 or T2'] },
+
+  { n: 3, tKey: 'monthTitle3', accent: '#F8CCD9', tara: 'happy',
+    body: 'Nausea may ease toward end of this month. Energy often returns. T1 ends — miscarriage risk drops significantly. Waistline thickening.',
+    baby: 'Fingers, toes, and eyelids forming. All major organs present. Baby is ~7 cm and 14 g — the size of a lime.',
+    eat: ['Iron: spinach, shak, liver once a week', 'Vitamin C (lebu, tomato) with iron meals — helps absorption', 'Milk and doi for calcium'],
+    avoid: ['Heavy lifting or sudden movements', 'Hot baths or saunas', 'Any medicines not prescribed by doctor'],
+    exercise: 'Build toward 30 min brisk walk most days. Start Kegel exercises now for pelvic floor strength.',
+    tasks: ['Start IFA tablets — free at govt facilities', 'First-trimester screening if available (nuchal scan)', 'Share news with family when you are ready'] },
+
+  { n: 4, tKey: 'monthTitle4', accent: '#F1C7DA', tara: 'happy',
+    body: 'Energy often improves. Belly starts to show. Dark line (linea nigra) may appear. Avoid lying flat on back from now — left side is best for sleeping.',
+    baby: 'Baby can hear muffled sounds. Sucking movements begin. Baby is ~12 cm, 140 g — the size of an avocado.',
+    eat: ['Extra ~340 kcal/day — more rice, roti, dal, fish', 'Milk or doi daily for calcium', 'Seasonal fruits every day'],
+    avoid: ['Caffeine more than 1 cup/day', 'Sleeping flat on back — switch to left side', 'Unsafe water — boil or filter (arsenic risk in BD)'],
+    exercise: '30 min brisk walk most days, prenatal yoga, swimming. Avoid lying flat on back from now.',
+    tasks: ['2nd ANC visit — BP, weight, urine protein', 'TT vaccination 1st dose — Tetanus Toxoid, free at govt', 'Continue IFA + calcium tablets daily'] },
+
+  { n: 5, tKey: 'monthTitle5', accent: '#EBC0E0', tara: 'celebrate',
+    body: 'First soft flutters ("quickening") this month. Back pain may begin — use a pillow behind your back. Left-side sleeping is now important.',
+    baby: 'Baby kicks and turns. Covered in white vernix (protective coating). Hearing develops — talk and sing to them.',
+    eat: ['Calcium: milk, doi, mola fish, green shak, til', 'Whole grains and sweet potato for energy', "Omega-3: cooked hilsha or rui fish for baby's brain"],
+    avoid: ['Standing for long periods without breaks', 'Tight clothes that press on the belly', 'Skipping ANC checkups'],
+    exercise: 'Walking 30 min daily, prenatal yoga, Kegels. Avoid fall-risk activities. Stay cool — overheating harms baby.',
+    tasks: ['Anomaly ultrasound (~18–22 weeks)', 'TT 2nd dose if 1st was at month 4', 'Learn kick counting — start awareness'] },
+
+  { n: 6, tKey: 'monthTitle6', accent: '#E0D5F0', tara: 'listening',
+    body: 'Heartburn and constipation common — fibre and water help. Varicose veins may appear. Talk and sing to baby — they hear you clearly now.',
+    baby: 'Eyelids open. Eyebrows forming. Baby practises breathing movements. ~30 cm, ~600 g — the size of a mango.',
+    eat: ['Iron-rich greens daily: shak, beans, liver once a week', 'Plenty of water and fibre (fruits, oats) for constipation', 'Nuts and seeds for energy and healthy fats'],
+    avoid: ['Spicy or very oily food (worsens heartburn)', 'Tea right after meals — wait 1 hour (blocks iron absorption)', 'Too many salty snacks (watch blood pressure)'],
+    exercise: '20–30 min daily walk, pelvic tilts for back pain, Kegels. Wear supportive flat shoes.',
+    tasks: ['3rd ANC visit', 'Gestational diabetes screening (~24–28 weeks)', 'Haemoglobin (Hb) recheck — treat anaemia early'] },
+
+  { n: 7, tKey: 'monthTitle7', accent: '#D6CCEC', tara: 'idle',
+    body: 'Baby bump grows quickly. Shortness of breath and leg cramps common. Need ~450 extra kcal/day. Braxton Hicks practice contractions may begin (painless).',
+    baby: 'Brain grows rapidly. Eyes open and close. Practises breathing. ~36 cm, ~900 g — the size of a brinjal.',
+    eat: ['Protein-heavy: eggs, fish, chicken, milk, dal, nuts every day', 'Banana and almonds for leg cramps (potassium, magnesium)', 'Continue calcium and iron tablets daily'],
+    avoid: ['Heavy meals before bed', 'Excess sugar and heavy white-rice meals (watch GDM)', 'Strenuous housework or heavy lifting'],
+    exercise: 'Gentle walking, breathing exercises, pelvic floor Kegels. Reduce intensity as bump grows.',
+    tasks: ['Start daily kick counting from ~28 weeks', 'Monitor blood pressure and swelling closely', 'Begin birth plan — delivery place, transport, blood donors'] },
+
+  { n: 8, tKey: 'monthTitle8', accent: '#E5D8E8', tara: 'idle',
+    body: 'Feet may swell — rest with feet elevated. Baby pressing up causes breathlessness. Braxton Hicks more frequent. Baby likely head-down now.',
+    baby: 'Bones hardening. Fat layers building. Brain developing fast. ~42 cm, ~1.8 kg — the size of a coconut.',
+    eat: ['Low-salt meals to manage swelling', 'Fresh fruit and coconut water for hydration', 'Small frequent meals — large meals cause heartburn'],
+    avoid: ['Standing more than 30 min without breaks', 'Long travel far from a hospital', 'Forgetting daily kick counts — report any decrease immediately'],
+    exercise: 'Short walks, gentle stretching, breathing and relaxation for labour preparation. Rest with feet elevated.',
+    tasks: ['ANC visits every 2–3 weeks now', "Baby's position checked by doctor", 'Hospital bag packed — transport confirmed, blood donors arranged'] },
+
+  { n: 9, tKey: 'monthTitle9', accent: '#FBD6CB', tara: 'celebrate',
+    body: 'Baby drops lower — pressure on pelvis increases. Sleep disrupted. Watch for labour signs: regular contractions, water breaking, bloody show.',
+    baby: 'Full term from week 37. All organs ready. Gaining final fat stores. ~48–52 cm, ~2.5–3.5 kg.',
+    eat: ['Dates (খেজুর) near term — may support labour readiness', 'Small energy-dense frequent meals', 'Warm soup and fluids; stay hydrated'],
+    avoid: ['Long travel far from hospital', 'Being alone without phone or someone nearby', 'Ignoring any warning sign — contractions, no movement, pain, water breaking'],
+    exercise: 'Light walking supports labour readiness. Gentle pelvic floor exercises. Rest as needed.',
+    tasks: ['Weekly ANC visits', 'Emergency contacts and transport confirmed in writing', 'Blood donors (matching group) arranged — essential for C-section'] },
+
+  { n: 10, tKey: 'monthTitle10', accent: '#D4EDDA', tara: 'celebrate',
+    body: 'Lochia (vaginal discharge) is normal for 4–6 weeks. Stitches or C-section wound must stay clean and dry. Rest whenever the baby sleeps. Breastfeeding may feel hard at first — latch takes practice; it gets easier.',
+    baby: "Your newborn sleeps 16–18 hrs/day and feeds 8–12 times. Give শালদুধ (colostrum) — baby's first vaccine. Never discard it. It gives way to breast milk within days.",
+    eat: ['Iron-rich foods: shak, eggs, meat — recover from blood loss', 'Lactation foods: oats, methi seeds, plenty of fluids', 'Extra ~300–500 kcal/day while breastfeeding — eat more, not less'],
+    avoid: ['Alcohol — passes directly into breast milk', 'More than 1–2 cups of caffeine per day', 'Crash dieting — body needs nutrition to heal and produce milk'],
+    exercise: 'Gentle walking only. C-section: slow short walks within 24 hrs; no heavy lifting for 6 weeks. No strenuous exercise yet.',
+    tasks: ['Postnatal checkup for mother — day 3, then day 7–14', "Baby's EPI vaccines at birth: BCG, OPV, Vitamin K injection", 'Watch red flags: heavy bleeding, fever, wound infection, severe mood changes'] },
+
+  { n: 11, tKey: 'monthTitle11', accent: '#C8E6C9', tara: 'happy',
+    body: '"Baby blues" (teary/sad first 2 weeks) is normal. If low mood lasts beyond 2 weeks, speak to a doctor — postpartum depression is common and very treatable. Pelvic floor exercises speed recovery.',
+    baby: 'First social smile appears ~week 6. Alert periods grow longer. Colic crying peaks now but will pass. Eyes following faces and sounds.',
+    eat: ['Calcium: milk, doi, mola fish, green shak', 'Protein at every meal: egg, fish, chicken, dal', 'Colourful vegetables for vitamins, iron, and recovery'],
+    avoid: ['Excess sugar and processed snacks', 'Skipping meals — especially while breastfeeding', 'Heavy lifting (especially after C-section or perineal tear)'],
+    exercise: 'Gentle walks and light stretching. Begin gentle Kegels when comfortable. Ask doctor before heavier exercise.',
+    tasks: ['6-week postnatal checkup — discuss mood, recovery, birth control', 'Baby vaccination at 6 weeks: Penta, PCV, OPV 1st dose', 'Discuss family planning — at least 2-year gap before next pregnancy'] },
+
+  { n: 12, tKey: 'monthTitle12', accent: '#B2EBF2', tara: 'happy',
+    body: 'Hormones begin stabilising and energy slowly returns. Postpartum depression can persist or appear at this stage — check in with yourself and speak to a doctor if needed. Your body has done something extraordinary.',
+    baby: 'Baby holds head up briefly during tummy time. Tracking your face, smiling back, and cooing in reply. Becoming more interactive and expressive every day.',
+    eat: ['Omega-3: cooked fish, walnuts', 'Continue leafy greens: shak, spinach, broccoli', 'Maintain iron + calcium as doctor advises'],
+    avoid: ['High-mercury fish: shark, swordfish, large tuna', 'Excessive caffeine (still passes into breast milk)', 'Ultra-processed snacks — your recovery needs real food'],
+    exercise: 'Gradually return to regular exercise: walking, yoga, light strengthening. Clear with doctor first, especially for C-section recovery.',
+    tasks: ['3-month postnatal checkup if not yet done', "Baby's Penta/PCV/OPV 2nd doses (~10 weeks)", "Tummy time daily for baby's head and neck strength"] }];
 
   const m = months[active - 1];
 
@@ -32,8 +120,15 @@ function JourneyScreen({ state, setState, openScreen }) {
               {L('yourJourney')}
             </div>
             <div style={{ fontFamily: 'var(--display)', fontSize: 28, color: '#2A1A36', marginTop: 4, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-              {L('month')} <span style={{ fontStyle: 'italic' }}>{m.n}</span><br />
-              <span style={{ fontSize: 22, color: '#5A3E5F' }}>{L(m.tKey, 'tara')}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                {L('month')} <span style={{ fontStyle: 'italic' }}>{m.n}</span>
+                {active >= 10 && (
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#2E7D32', background: 'rgba(212,237,218,0.9)', borderRadius: 99, padding: '2px 8px', letterSpacing: '0.04em', fontStyle: 'normal', fontFamily: 'var(--ui)' }}>
+                    {L('afterBirth')}
+                  </span>
+                )}
+              </span><br />
+              <span style={{ fontSize: 22, color: active >= 10 ? '#2E7D32' : '#5A3E5F' }}>{L(m.tKey, 'tara')}</span>
             </div>
           </div>
           <Tara size={108} mood={m.tara} />
@@ -43,25 +138,40 @@ function JourneyScreen({ state, setState, openScreen }) {
       {/* month rail */}
       <div style={{ padding: '14px 0 0', overflowX: 'auto', scrollbarWidth: 'none' }}>
         <div style={{ display: 'flex', gap: 8, padding: '0 22px' }}>
-          {months.map((mm) =>
-          <button key={mm.n} onClick={() => setActive(mm.n)} style={{
-            flex: '0 0 auto', padding: '8px 14px', borderRadius: 99,
-            border: 'none', cursor: 'pointer',
-            background: active === mm.n ? '#3D2840' : 'rgba(255,255,255,0.7)',
-            color: active === mm.n ? '#FFF1E4' : '#3D2840',
-            fontSize: 12, fontWeight: 600, letterSpacing: '-0.01em',
-            boxShadow: active === mm.n ? '0 6px 18px -8px rgba(61,40,64,0.5)' : 'none'
-          }}>
-              {L('month')} {mm.n}
-            </button>
-          )}
+          {months.map((mm) => {
+            const isPostBirth = mm.n >= 10;
+            const isActive = active === mm.n;
+            return (
+              <React.Fragment key={mm.n}>
+                {mm.n === 10 && (
+                  <div style={{ flex: '0 0 auto', display: 'flex', alignItems: 'center', padding: '0 4px', color: '#2E7D32', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', opacity: 0.85, whiteSpace: 'nowrap' }}>
+                    🌸 {L('afterBirth')}
+                  </div>
+                )}
+                <button onClick={() => setActive(mm.n)} style={{
+                  flex: '0 0 auto', padding: '8px 14px', borderRadius: 99, cursor: 'pointer',
+                  border: isPostBirth && !isActive ? '1.5px solid rgba(46,125,50,0.3)' : 'none',
+                  background: isActive
+                    ? (isPostBirth ? '#2E7D32' : '#3D2840')
+                    : (isPostBirth ? 'rgba(212,237,218,0.8)' : 'rgba(255,255,255,0.7)'),
+                  color: isActive ? '#FFF1E4' : (isPostBirth ? '#1B5E20' : '#3D2840'),
+                  fontSize: 12, fontWeight: 600, letterSpacing: '-0.01em',
+                  boxShadow: isActive
+                    ? (isPostBirth ? '0 6px 18px -8px rgba(46,125,50,0.5)' : '0 6px 18px -8px rgba(61,40,64,0.5)')
+                    : 'none'
+                }}>
+                  {L('month')} {mm.n}
+                </button>
+              </React.Fragment>
+            );
+          })}
         </div>
       </div>
 
       {/* hero of month */}
       <div style={{ padding: '14px 22px 0' }}>
         <Card style={{ background: m.accent, padding: 22 }}>
-          <Pill tone="cream">{L('forYourBaby')}</Pill>
+          <Pill tone="cream">{L(active >= 10 ? 'yourNewborn' : 'forYourBaby')}</Pill>
           <div style={{ fontFamily: 'var(--display)', fontSize: 19, color: '#3D2840', marginTop: 8, lineHeight: 1.35, letterSpacing: '-0.01em' }}>
             {m.baby}
           </div>
@@ -70,7 +180,7 @@ function JourneyScreen({ state, setState, openScreen }) {
 
       <div style={{ padding: '12px 22px 0' }}>
         <Card style={{ background: '#FFFCF7' }}>
-          <Pill tone="lav">{L('forYourBody')}</Pill>
+          <Pill tone="lav">{L(active >= 10 ? 'yourRecovery' : 'forYourBody')}</Pill>
           <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', marginTop: 8, lineHeight: 1.35, letterSpacing: '-0.01em' }}>
             {m.body}
           </div>
@@ -100,9 +210,36 @@ function JourneyScreen({ state, setState, openScreen }) {
         </Card>
       </div>
 
+      {/* exercise */}
+      <div style={{ padding: '12px 22px 0' }}>
+        <Card style={{ background: '#E8F4FD' }}>
+          <Pill tone="lav">{L('exercise')}</Pill>
+          <div style={{ display: 'flex', gap: 10, marginTop: 8, alignItems: 'flex-start' }}>
+            <span style={{ fontSize: 20 }}>🏃‍♀️</span>
+            <div style={{ fontFamily: 'var(--display)', fontSize: 16, color: '#2A1A36', lineHeight: 1.45, letterSpacing: '-0.01em' }}>
+              {m.exercise}
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* key tasks */}
+      <div style={{ padding: '12px 22px 0' }}>
+        <Card style={{ background: '#FFFDE7' }}>
+          <Pill tone="peach">{L('thisMonthTasks')}</Pill>
+          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 7 }}>
+            {m.tasks.map((t, i) =>
+              <div key={i} style={{ display: 'flex', gap: 9, fontSize: 13, color: '#3D2840', lineHeight: 1.4 }}>
+                <span style={{ color: '#3D2840', opacity: 0.45, flexShrink: 0 }}>☐</span> {t}
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
+
       {/* emotional changes */}
       <div style={{ padding: '12px 22px 20px' }}>
-        <Card style={{ background: 'linear-gradient(135deg, #FBE5D6, #F4D7E5)' }}>
+        <Card style={{ background: active >= 10 ? 'linear-gradient(135deg, #D4EDDA, #C8E6C9)' : 'linear-gradient(135deg, #FBE5D6, #F4D7E5)' }}>
           <div style={{ display: 'flex', gap: 12 }}>
             <div style={{ fontSize: 26, lineHeight: 1 }}>💗</div>
             <div>
@@ -165,7 +302,12 @@ function ChatScreen({ state, setState, openScreen }) {
       const res = await fetch(`${window.BACKEND_URL}/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-        body: JSON.stringify({ patient_id: patientId, message: text, source: 'chat' }),
+        body: JSON.stringify({
+          patient_id: patientId,
+          message: text,
+          source: 'chat',
+          context: msgs.slice(-10).map(m => ({ role: m.who === 'user' ? 'user' : 'tara', content: m.t })),
+        }),
       });
       const data = await res.json();
       const emo = data.emotion || 'caring';
@@ -574,7 +716,7 @@ function VoiceScreen({ state, setState, openScreen }) {
       if (em === 'caring') {
         taraRef.current?.playCaring(holdMs);
       } else if (em === 'celebration' || em === 'celebration2') {
-        taraRef.current?.playCelebration2();
+        taraRef.current?.playCelebration();
       } else if (em === 'singing') {
         taraRef.current?.playSinging();
       } else {

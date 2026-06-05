@@ -13,6 +13,9 @@ Previous conditions: {conditions}
 DGHS Danger Sign Knowledge:
 {rag_context}
 
+Conversation history:
+{history}
+
 SEVERITY CLASSIFICATION — pick exactly one:
 - mild:      Common pregnancy discomfort, within normal range for week {week}
 - moderate:  Needs monitoring, health worker should be informed
@@ -35,6 +38,11 @@ Respond ONLY in this JSON:
 
 def symptom_node(state: MayaState) -> MayaState:
     profile = state.get("patient_profile", {})
+    history = state.get("conversation_history", [])
+    history_text = "\n".join(
+        f"{'User' if h['role'] == 'user' else 'Tara'}: {h['content']}"
+        for h in history[-4:]
+    ) or "No previous conversation."
 
     rag_results = rag_search(
         query=state["user_message"],
@@ -54,11 +62,17 @@ def symptom_node(state: MayaState) -> MayaState:
         risk_level=profile.get("risk_level", "low"),
         conditions=profile.get("conditions", "none"),
         rag_context="\n\n".join(rag_results) or "No specific knowledge found.",
+        history=history_text,
         symptoms=state["user_message"],
     )
 
+    messages = [
+        {"role": "user" if h["role"] == "user" else "assistant", "content": h["content"]}
+        for h in history
+    ] + [{"role": "user", "content": state["user_message"]}]
+
     raw    = call_llm_with_fallback(
-        messages=[{"role": "user", "content": state["user_message"]}],
+        messages=messages,
         system=prompt,
         max_tokens=400,
     )

@@ -108,10 +108,11 @@ def classify_intent(state: MayaState) -> MayaState:
             .limit(5)
             .all()
         )
-        state["conversation_history"] = [
-            {"role": h.role, "content": h.content}
-            for h in reversed(history)
-        ]
+        if history:
+            state["conversation_history"] = [
+                {"role": h.role, "content": h.content}
+                for h in reversed(history)
+            ]
 
     # 1. Fast keyword pre-classification (no LLM needed for clear cases)
     fast = _keyword_classify(state["user_message"])
