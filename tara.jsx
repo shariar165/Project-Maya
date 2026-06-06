@@ -9,7 +9,7 @@ const _EMOTION_VIDEOS = {
   caring:       "assets/tara/careing.mp4",
   alert:        "assets/tara/angry.webm",
   worried:      "assets/tara/angry.webm",
-  celebration:  "assets/tara/celebration2.webm",
+  celebration:  "assets/tara/celebrating.webm",
   celebration2: "assets/tara/celebration2.webm",
   celebrate:    "assets/tara/celebrating.webm",
   singing:      "assets/tara/singing.webm",
@@ -26,6 +26,7 @@ const _FUNNY_VIDEOS = {
 };
 
 const _FUNNY_KEYS = Object.keys(_FUNNY_VIDEOS);
+const _CELEBRATION_STATES = new Set(['celebrate', 'celebration', 'celebration2']);
 const _FADE_MS = 120;
 const _EMOTION_HOLD = 4000;
 
@@ -84,11 +85,14 @@ const Tara = React.forwardRef(({
 
   // ── play an emotion state ─────────────────────────────────────
   const playEmotion = React.useCallback((state, loop = true, onDone) => {
-    const file = _EMOTION_VIDEOS[state];
-    if (!file) { console.warn("[TARA] Unknown state:", state); return; }
+    const resolved = _CELEBRATION_STATES.has(state)
+      ? (Math.random() < 0.5 ? 'celebration' : 'celebration2')
+      : state;
+    const file = _EMOTION_VIDEOS[resolved];
+    if (!file) { console.warn("[TARA] Unknown state:", resolved); return; }
     if (emotionTimer.current) { clearTimeout(emotionTimer.current); emotionTimer.current = null; }
     modeRef.current  = "emotion";
-    stateRef.current = state;
+    stateRef.current = resolved;
     crossfade(file, loop, onDone);
   }, [crossfade]);
 
@@ -216,6 +220,13 @@ const Tara = React.forwardRef(({
       },
       playSinging(holdMs = _EMOTION_HOLD) {
         playEmotion("singing", true, () => {
+          emotionTimer.current = setTimeout(() => {
+            playEmotion("idle"); emotionTimer.current = null;
+          }, holdMs);
+        });
+      },
+      playCelebration(holdMs = _EMOTION_HOLD) {
+        playEmotion("celebration", true, () => {
           emotionTimer.current = setTimeout(() => {
             playEmotion("idle"); emotionTimer.current = null;
           }, holdMs);
