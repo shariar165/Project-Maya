@@ -1,0 +1,125 @@
+{
+  "id": "kegels",
+  "category": "move",
+  "title": { "bn": "কেগেল ব্যায়াম", "en": "Kegel Exercises" },
+  "subtitle": { "bn": "৪ মিনিট · পেলভিক ফ্লোর", "en": "4 min · Pelvic Floor" },
+  "duration_sec": 240,
+  "allowed_trimesters": [1, 2, 3],
+  "contraindications": [],
+  "source": "NHS – Pelvic Floor Exercises in Pregnancy",
+  "color_from": "#D5EBE0",
+  "color_to": "#E5EDD5",
+  "icon": "💪",
+  "steps": [
+    {
+      "id": "intro",
+      "instruction_text": {
+        "bn": "কেগেল ব্যায়াম গর্ভাবস্থায় আপনার সেরা বন্ধু।",
+        "en": "Kegel exercises are your best friend during pregnancy."
+      },
+      "duration_sec": 12,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "find",
+      "instruction_text": {
+        "bn": "পেলভিক ফ্লোর পেশী খুঁজুন — প্রস্রাব থামানোর মতো অনুভব করুন।",
+        "en": "Find your pelvic floor muscles — imagine stopping the flow of urine."
+      },
+      "duration_sec": 12,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "squeeze_1",
+      "instruction_text": {
+        "bn": "আস্তে চেপে ধরুন এবং তুলুন... ১... ২... ৩... ৪... ৫...",
+        "en": "Gently squeeze and lift... hold... 1... 2... 3... 4... 5..."
+      },
+      "duration_sec": 20,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "release_1",
+      "instruction_text": {
+        "bn": "আস্তে ছেড়ে দিন... পেশী সম্পূর্ণ শিথিল করুন।",
+        "en": "Release slowly... let the muscles relax completely."
+      },
+      "duration_sec": 12,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "squeeze_2",
+      "instruction_text": {
+        "bn": "আবার চেপে ধরুন... ১... ২... ৩... ৪... ৫...",
+        "en": "Squeeze again... 1... 2... 3... 4... 5..."
+      },
+      "duration_sec": 20,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "release_2",
+      "instruction_text": {
+        "bn": "ছেড়ে দিন... এবং শ্বাস নিন।",
+        "en": "Release... and breathe."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "quick",
+      "instruction_text": {
+        "bn": "এখন ১০টি দ্রুত চাপ দিন — ভেতরে এবং বাইরে, ভেতরে এবং বাইরে...",
+        "en": "Now 10 quick squeezes — in and out, in and out..."
+      },
+      "duration_sec": 20,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "rest",
+      "instruction_text": {
+        "bn": "বিশ্রাম নিন। একটু সময়ের জন্য।",
+        "en": "Relax. Rest for a moment."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "long_hold",
+      "instruction_text": {
+        "bn": "এবার ১০ গুণে ধরুন... ১... ২... ৩... ৪... ৫... ৬... ৭... ৮... ৯... ১০...",
+        "en": "Hold for 10 counts this time... 1... 2... 3... 4... 5... 6... 7... 8... 9... 10..."
+      },
+      "duration_sec": 22,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "final_release",
+      "instruction_text": {
+        "bn": "ছেড়ে দিন... এবং শ্বাস নিন।",
+        "en": "Release... and breathe."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "close",
+      "instruction_text": {
+        "bn": "আপনি এমন পেশী শক্তিশালী করেছেন যা প্রসবে সাহায্য করে। দারুণ।",
+        "en": "You've just strengthened muscles that support birth. Amazing."
+      },
+      "duration_sec": 15,
+      "tara_mood": "happy",
+      "breathing_pace": null
+    }
+  ]
+}

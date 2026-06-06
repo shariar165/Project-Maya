@@ -1,0 +1,135 @@
+{
+  "id": "bedtime_body_scan",
+  "category": "sleep",
+  "title": { "bn": "শোয়ার আগে বডি স্ক্যান", "en": "Bedtime Body Scan" },
+  "subtitle": { "bn": "১০ মিনিট · ঘুমের প্রস্তুতি", "en": "10 min · Sleep Prep" },
+  "duration_sec": 600,
+  "allowed_trimesters": [1, 2, 3],
+  "contraindications": [],
+  "source": "NHS – Sleep in Pregnancy: Relaxation Techniques",
+  "color_from": "#D8D5F0",
+  "color_to": "#C8D5F0",
+  "icon": "🌙",
+  "steps": [
+    {
+      "id": "intro",
+      "instruction_text": {
+        "bn": "এই অভ্যাস আপনার শরীর ও মনকে বিশ্রামের জন্য তৈরি করে।",
+        "en": "This practice prepares your body and mind for rest."
+      },
+      "duration_sec": 10,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "position",
+      "instruction_text": {
+        "bn": "বাঁ দিকে শুয়ে পড়ুন, হাঁটুর মাঝে বালিশ রাখুন।",
+        "en": "Lie on your left side with a pillow between your knees."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "settle",
+      "instruction_text": {
+        "bn": "তিনটি আস্তে শ্বাস নিন। শরীরকে বিছানায় স্থির হতে দিন।",
+        "en": "Take three slow breaths. Let your body settle."
+      },
+      "duration_sec": 20,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "in": 4, "out": 6 }
+    },
+    {
+      "id": "heavy",
+      "instruction_text": {
+        "bn": "শরীরের ভার অনুভব করুন বিছানায় ডুবে যাচ্ছে।",
+        "en": "Feel the weight of your body sinking into the bed."
+      },
+      "duration_sec": 15,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "feet",
+      "instruction_text": {
+        "bn": "আঙুল ও পা — ভারী এবং উষ্ণ...",
+        "en": "Your toes and feet — heavy and warm..."
+      },
+      "duration_sec": 25,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "legs",
+      "instruction_text": {
+        "bn": "পায়ের পেশী, হাঁটু, উরু — ছেড়ে দিচ্ছে...",
+        "en": "Your calves, knees, thighs — letting go..."
+      },
+      "duration_sec": 30,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "belly",
+      "instruction_text": {
+        "bn": "আপনার পেট — উঠছে নামছে — আপনার শিশুও ঘুমাচ্ছে...",
+        "en": "Your belly — rise and fall — your baby sleeping too..."
+      },
+      "duration_sec": 30,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "back",
+      "instruction_text": {
+        "bn": "পিঠ ও কাঁধ — গদিতে গলে যাচ্ছে...",
+        "en": "Your back and shoulders — melting into the mattress..."
+      },
+      "duration_sec": 30,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "arms",
+      "instruction_text": {
+        "bn": "বাহু ও হাত — ভারী, শিথিল...",
+        "en": "Your arms and hands — heavy, relaxed..."
+      },
+      "duration_sec": 25,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "neck",
+      "instruction_text": {
+        "bn": "ঘাড় ও মুখ — প্রতিটি পেশী নরম...",
+        "en": "Your neck and face — every muscle soft..."
+      },
+      "duration_sec": 25,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "breathe",
+      "instruction_text": {
+        "bn": "শান্তি শ্বাসে নিন... দিনের সব কিছু শ্বাসে বের করুন...",
+        "en": "Breathe in peace... breathe out the day..."
+      },
+      "duration_sec": 30,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "in": 4, "out": 8 }
+    },
+    {
+      "id": "close",
+      "instruction_text": {
+        "bn": "আপনি ধরা পড়েছেন। আপনি নিরাপদ। ঘুম সহজে আসে।",
+        "en": "You are held. You are safe. Sleep comes easily."
+      },
+      "duration_sec": 25,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    }
+  ]
+}

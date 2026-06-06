@@ -144,3 +144,17 @@ class Reminder(Base):
     scheduled_at  = Column(String, nullable=False)   # ISO datetime string
     message       = Column(Text, default="")
     sent          = Column(Boolean, default=False)
+
+
+class WellnessSession(Base):
+    __tablename__ = "wellness_sessions"
+
+    id                  = Column(String, primary_key=True, default=_uuid)
+    patient_id          = Column(String, ForeignKey("patients.id"), nullable=False)
+    session_template_id = Column(String, nullable=False)
+    started_at          = Column(DateTime, default=datetime.utcnow)
+    completed_at        = Column(DateTime, nullable=True)
+    completion_pct      = Column(Float, default=0.0)
+    mood_before         = Column(String, nullable=True)
+    mood_after          = Column(String, nullable=True)
+    notes               = Column(Text, nullable=True)

@@ -1,0 +1,105 @@
+{
+  "id": "deep_relaxation",
+  "category": "calm",
+  "title": { "bn": "গভীর শিথিলায়ন", "en": "Deep Relaxation" },
+  "subtitle": { "bn": "৫ মিনিট · ভার হালকা করুন", "en": "5 min · Ease the Weight" },
+  "duration_sec": 300,
+  "allowed_trimesters": [1, 2, 3],
+  "contraindications": [],
+  "source": "WHO Perinatal Mental Health – Relaxation Response",
+  "color_from": "#F4D7E5",
+  "color_to": "#E0D5F0",
+  "icon": "🌙",
+  "steps": [
+    {
+      "id": "intro",
+      "instruction_text": {
+        "bn": "গর্ভাবস্থার ভার ভারী লাগলে, এটি আপনার জন্য।",
+        "en": "When the weight of pregnancy feels heavy, this is for you."
+      },
+      "duration_sec": 10,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "settle",
+      "instruction_text": {
+        "bn": "আরামদায়কভাবে বসুন বা শুয়ে পড়ুন। কোনো চেষ্টার দরকার নেই।",
+        "en": "Sit or lie comfortably. No effort needed."
+      },
+      "duration_sec": 8,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "breath",
+      "instruction_text": {
+        "bn": "শ্বাস স্বাভাবিক থাকুক। শুধু দেখুন।",
+        "en": "Let your breath be natural. Just observe it."
+      },
+      "duration_sec": 15,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "face_relax",
+      "instruction_text": {
+        "bn": "প্রতিটি শ্বাস ছাড়ার সাথে কপালের টান ছেড়ে দিন... চোয়াল ছেড়ে দিন...",
+        "en": "With each exhale, let tension leave your forehead... your jaw..."
+      },
+      "duration_sec": 25,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "shoulders",
+      "instruction_text": {
+        "bn": "প্রতিটি শ্বাস ছাড়ার সাথে কাঁধ একটু নামে...",
+        "en": "With each exhale, your shoulders drop a little more..."
+      },
+      "duration_sec": 22,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "hands",
+      "instruction_text": {
+        "bn": "হাত খুলুন। পেট নরম হোক।",
+        "en": "Your hands open. Your belly softens."
+      },
+      "duration_sec": 15,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "support",
+      "instruction_text": {
+        "bn": "নিচে যে সমর্থন আছে তা অনুভব করুন — শক্ত, নিরাপদ, আপনাকে ধরছে।",
+        "en": "Feel the support beneath you — solid, safe, holding you."
+      },
+      "duration_sec": 20,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "permission",
+      "instruction_text": {
+        "bn": "এই মুহূর্তে আপনাকে কিছু করতে হবে না। শুধু এখানে থাকুন।",
+        "en": "You don't have to do anything right now. Just be here."
+      },
+      "duration_sec": 18,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "close",
+      "instruction_text": {
+        "bn": "আপনি যথেষ্ট। ঠিক এখন, ঠিক যেমন আছেন।",
+        "en": "You are enough. Exactly as you are, right now."
+      },
+      "duration_sec": 20,
+      "tara_mood": "happy",
+      "breathing_pace": null
+    }
+  ]
+}

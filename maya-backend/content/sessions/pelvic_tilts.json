@@ -1,0 +1,115 @@
+{
+  "id": "pelvic_tilts",
+  "category": "move",
+  "title": { "bn": "পেলভিক টিল্ট", "en": "Pelvic Tilts" },
+  "subtitle": { "bn": "৪ মিনিট · পিঠের ব্যথা উপশম", "en": "4 min · Back Relief" },
+  "duration_sec": 240,
+  "allowed_trimesters": [1, 2, 3],
+  "contraindications": [],
+  "source": "NHS Antenatal Exercises – Pelvic Tilt",
+  "color_from": "#D5EBE0",
+  "color_to": "#E5EDD5",
+  "icon": "🌿",
+  "steps": [
+    {
+      "id": "intro",
+      "instruction_text": {
+        "bn": "পেলভিক টিল্ট কোমর ব্যথা কমায় — গর্ভাবস্থার একটি সাধারণ অস্বস্তি।",
+        "en": "Pelvic tilts ease lower back ache — a common pregnancy discomfort."
+      },
+      "duration_sec": 12,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "position",
+      "instruction_text": {
+        "bn": "দেওয়ালে পিঠ দিয়ে দাঁড়ান, পা কোমর-প্রস্থ আলাদা রাখুন।",
+        "en": "Stand with your back against a wall, feet hip-width apart."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "tilt_1",
+      "instruction_text": {
+        "bn": "আস্তে পেলভিস সামনে কাত করুন — কোমরের নিচ দেওয়ালে চাপ দিন।",
+        "en": "Gently flatten your lower back against the wall — tilt your pelvis forward."
+      },
+      "duration_sec": 15,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "hold_1",
+      "instruction_text": {
+        "bn": "৫ গুণে ধরুন... ১... ২... ৩... ৪... ৫...",
+        "en": "Hold for 5 counts... 1... 2... 3... 4... 5..."
+      },
+      "duration_sec": 15,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "release_1",
+      "instruction_text": {
+        "bn": "ছেড়ে দিন — পিঠ স্বাভাবিকভাবে বাঁকতে দিন।",
+        "en": "Release — let your back curve naturally."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "tilt_2",
+      "instruction_text": {
+        "bn": "আবার কাত করুন। পেট ভেতরে, কোমর চাপা...",
+        "en": "Tilt again. Belly in, lower back flat..."
+      },
+      "duration_sec": 15,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "hold_2",
+      "instruction_text": {
+        "bn": "ধরুন...",
+        "en": "Hold..."
+      },
+      "duration_sec": 15,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "release_2",
+      "instruction_text": {
+        "bn": "ছেড়ে দিন।",
+        "en": "Release."
+      },
+      "duration_sec": 8,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "reps",
+      "instruction_text": {
+        "bn": "আরও ৫টি আস্তে টিল্ট করি একসাথে।",
+        "en": "Let's do 5 more gentle tilts together."
+      },
+      "duration_sec": 50,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "close",
+      "instruction_text": {
+        "bn": "বিশ্রাম নিন। আপনার কোমর কৃতজ্ঞ।",
+        "en": "Rest. Feel how your lower back thanks you."
+      },
+      "duration_sec": 15,
+      "tara_mood": "happy",
+      "breathing_pace": null
+    }
+  ]
+}

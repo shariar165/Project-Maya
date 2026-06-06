@@ -1,0 +1,125 @@
+{
+  "id": "478_breathing",
+  "category": "breathe",
+  "title": { "bn": "৪-৭-৮ শ্বাস-প্রশ্বাস", "en": "4-7-8 Calming Breath" },
+  "subtitle": { "bn": "৪ মিনিট · শ্বাস-প্রশ্বাস", "en": "4 min · Breathing" },
+  "duration_sec": 240,
+  "allowed_trimesters": [1, 2, 3],
+  "contraindications": [],
+  "source": "Dr. Andrew Weil's 4-7-8 Breathing Technique",
+  "color_from": "#D8D5F0",
+  "color_to": "#C8D5F0",
+  "icon": "🫁",
+  "steps": [
+    {
+      "id": "intro",
+      "instruction_text": {
+        "bn": "এই শ্বাস আপনার মনকে শান্ত করবে। উদ্বেগ কমাতে এটি খুব কার্যকর।",
+        "en": "This breath will quiet your mind. It's very effective for worry."
+      },
+      "duration_sec": 10,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "in_1",
+      "instruction_text": {
+        "bn": "নাক দিয়ে ৪ গুণে শ্বাস নিন...",
+        "en": "Breathe in through your nose for 4 counts..."
+      },
+      "duration_sec": 16,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "in": 4 }
+    },
+    {
+      "id": "hold_1",
+      "instruction_text": {
+        "bn": "৭ গুণে ধরুন... আস্তে... ধরুন...",
+        "en": "Hold for 7... just hold... gently..."
+      },
+      "duration_sec": 28,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "hold": 7 }
+    },
+    {
+      "id": "out_1",
+      "instruction_text": {
+        "bn": "মুখ দিয়ে ৮ গুণে ছাড়ুন... সব উদ্বেগ বের করে দিন...",
+        "en": "Breathe out through your mouth for 8... let any tension go..."
+      },
+      "duration_sec": 32,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "out": 8 }
+    },
+    {
+      "id": "in_2",
+      "instruction_text": {
+        "bn": "আবার... ৪ গুণে শ্বাস নিন...",
+        "en": "Again... in for 4..."
+      },
+      "duration_sec": 16,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "in": 4 }
+    },
+    {
+      "id": "hold_2",
+      "instruction_text": {
+        "bn": "ধরুন... কোমলভাবে...",
+        "en": "Hold... gently..."
+      },
+      "duration_sec": 28,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "hold": 7 }
+    },
+    {
+      "id": "out_2",
+      "instruction_text": {
+        "bn": "ছাড়ুন... সব কিছু যেতে দিন...",
+        "en": "Out... let everything go..."
+      },
+      "duration_sec": 32,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "out": 8 }
+    },
+    {
+      "id": "in_3",
+      "instruction_text": {
+        "bn": "শেষবার... ধীরে শ্বাস নিন...",
+        "en": "One more time... breathe in slowly..."
+      },
+      "duration_sec": 16,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "in": 4 }
+    },
+    {
+      "id": "hold_3",
+      "instruction_text": {
+        "bn": "ধরুন...",
+        "en": "Hold..."
+      },
+      "duration_sec": 28,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "hold": 7 }
+    },
+    {
+      "id": "out_3",
+      "instruction_text": {
+        "bn": "ছাড়ুন... আপনি অসাধারণ করছেন।",
+        "en": "Out... you're doing beautifully."
+      },
+      "duration_sec": 32,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "out": 8 }
+    },
+    {
+      "id": "close",
+      "instruction_text": {
+        "bn": "বিশ্রাম নিন। আপনি কতটা শান্ত অনুভব করছেন লক্ষ্য করুন।",
+        "en": "Rest. Notice how calm you feel."
+      },
+      "duration_sec": 12,
+      "tara_mood": "happy",
+      "breathing_pace": null
+    }
+  ]
+}

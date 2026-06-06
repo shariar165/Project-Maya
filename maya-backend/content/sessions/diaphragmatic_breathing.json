@@ -1,0 +1,115 @@
+{
+  "id": "diaphragmatic_breathing",
+  "category": "breathe",
+  "title": { "bn": "ডায়াফ্রাম্যাটিক শ্বাস", "en": "Diaphragmatic Breathing" },
+  "subtitle": { "bn": "৩ মিনিট · প্রসবের প্রস্তুতি", "en": "3 min · Labour Prep" },
+  "duration_sec": 180,
+  "allowed_trimesters": [3],
+  "contraindications": [],
+  "source": "ACOG Pregnancy Exercise Guidelines – Breathing for Labour",
+  "color_from": "#F4D7E5",
+  "color_to": "#F8D5DF",
+  "icon": "🤱",
+  "steps": [
+    {
+      "id": "intro",
+      "instruction_text": {
+        "bn": "তৃতীয় ত্রৈমাসিকে গভীর শ্বাস আপনার এবং শিশু উভয়কেই সাহায্য করে।",
+        "en": "In your third trimester, deep breathing supports both of you."
+      },
+      "duration_sec": 12,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "position",
+      "instruction_text": {
+        "bn": "উভয় হাত পেটের নিচে রাখুন। হাতের উষ্ণতা অনুভব করুন।",
+        "en": "Place both hands low on your belly. Feel the warmth."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "in_1",
+      "instruction_text": {
+        "bn": "আস্তে শ্বাস নিন, পেট উপরে উঠতে দিন...",
+        "en": "Breathe in slowly, let your belly rise..."
+      },
+      "duration_sec": 20,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "in": 5 }
+    },
+    {
+      "id": "pause_1",
+      "instruction_text": {
+        "bn": "একটু থামুন...",
+        "en": "Pause briefly..."
+      },
+      "duration_sec": 8,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "hold": 2 }
+    },
+    {
+      "id": "out_1",
+      "instruction_text": {
+        "bn": "শ্বাস ছাড়ুন, পেট নিচে নামুক...",
+        "en": "Breathe out, let your belly fall..."
+      },
+      "duration_sec": 20,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "out": 5 }
+    },
+    {
+      "id": "in_2",
+      "instruction_text": {
+        "bn": "আবার... নিচ থেকে ভরুন...",
+        "en": "Again. Fill from the bottom..."
+      },
+      "duration_sec": 20,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "in": 5 }
+    },
+    {
+      "id": "pause_2",
+      "instruction_text": {
+        "bn": "থামুন...",
+        "en": "Pause..."
+      },
+      "duration_sec": 8,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "hold": 2 }
+    },
+    {
+      "id": "out_2",
+      "instruction_text": {
+        "bn": "ছাড়ুন... আপনার শিশুও এই অক্সিজেন পাচ্ছে।",
+        "en": "Release... your baby benefits from this oxygen too."
+      },
+      "duration_sec": 20,
+      "tara_mood": "caring",
+      "breathing_pace": { "out": 5 }
+    },
+    {
+      "id": "final",
+      "instruction_text": {
+        "bn": "শেষ একটি শ্বাস। গভীর এবং পরিপূর্ণ।",
+        "en": "One final breath. Deep and full."
+      },
+      "duration_sec": 20,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "in": 5, "hold": 2, "out": 5 }
+    },
+    {
+      "id": "close",
+      "instruction_text": {
+        "bn": "আস্তে ছাড়ুন। শাবাশ, মা।",
+        "en": "Release slowly. Well done, mama."
+      },
+      "duration_sec": 12,
+      "tara_mood": "happy",
+      "breathing_pace": null
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "id": "side_lying_leg_lifts",
+  "category": "move",
+  "title": { "bn": "সাইড-লাইং লেগ লিফট", "en": "Side-Lying Leg Lifts" },
+  "subtitle": { "bn": "৪ মিনিট · হিপ শক্তি", "en": "4 min · Hip Strength" },
+  "duration_sec": 240,
+  "allowed_trimesters": [2, 3],
+  "contraindications": ["preterm_labor_risk", "placenta_previa"],
+  "source": "ACOG – Safe Pregnancy Exercises: Side-Lying Positions",
+  "color_from": "#D5EBE0",
+  "color_to": "#E5EDD5",
+  "icon": "🌱",
+  "steps": [
+    {
+      "id": "intro",
+      "instruction_text": {
+        "bn": "দ্বিতীয় ও তৃতীয় ত্রৈমাসিকে নিরাপদ এবং কার্যকর।",
+        "en": "Safe and effective in your second and third trimesters."
+      },
+      "duration_sec": 10,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "position",
+      "instruction_text": {
+        "bn": "বাঁ দিকে শুয়ে পড়ুন, মাথা বাহুর উপর রাখুন।",
+        "en": "Lie on your left side, head resting on your arm."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "lift_1",
+      "instruction_text": {
+        "bn": "ডান পা আস্তে ১২ ইঞ্চি তুলুন... ৩ গুণে ধরুন...",
+        "en": "Slowly lift your right leg about 12 inches... hold for 3 counts..."
+      },
+      "duration_sec": 20,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "lower_1",
+      "instruction_text": {
+        "bn": "আস্তে নামান। ফেলে দেবেন না।",
+        "en": "Lower slowly. Don't let it drop."
+      },
+      "duration_sec": 12,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "reps_right",
+      "instruction_text": {
+        "bn": "নিজের গতিতে আরও ৮টি করুন।",
+        "en": "Do 8 more at your own pace. Steady and controlled."
+      },
+      "duration_sec": 45,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "switch",
+      "instruction_text": {
+        "bn": "আস্তে ডান দিকে ঘুরুন। এবার বাঁ পা।",
+        "en": "Roll gently to your right side. Let's do the left leg."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "lift_left",
+      "instruction_text": {
+        "bn": "তুলুন... ধরুন... ১... ২... ৩... নামান...",
+        "en": "Lift... hold... 1... 2... 3... lower..."
+      },
+      "duration_sec": 20,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "reps_left",
+      "instruction_text": {
+        "bn": "আরও ৮টি...",
+        "en": "8 more..."
+      },
+      "duration_sec": 45,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "close",
+      "instruction_text": {
+        "bn": "সোজা হোন। হিপের শক্তি অনুভব করুন।",
+        "en": "Come back upright. Notice the strength in your hips."
+      },
+      "duration_sec": 12,
+      "tara_mood": "happy",
+      "breathing_pace": null
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "id": "loving_kindness",
+  "category": "calm",
+  "title": { "bn": "ভালোবাসার মেডিটেশন", "en": "Loving-Kindness Meditation" },
+  "subtitle": { "bn": "৫ মিনিট · মা ও শিশুর জন্য", "en": "5 min · For Mother & Baby" },
+  "duration_sec": 300,
+  "allowed_trimesters": [1, 2, 3],
+  "contraindications": [],
+  "source": "WHO Perinatal Mental Health – Loving-Kindness Practice",
+  "color_from": "#F4D7E5",
+  "color_to": "#FBD7C6",
+  "icon": "🫶",
+  "steps": [
+    {
+      "id": "intro",
+      "instruction_text": {
+        "bn": "এই মেডিটেশন প্রথমে নিজেকে, তারপর শিশুকে ভালোবাসা পাঠায়।",
+        "en": "This meditation sends love — to yourself first, then your baby."
+      },
+      "duration_sec": 10,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "hand",
+      "instruction_text": {
+        "bn": "হৃদয়ে একটি হাত রাখুন। তার স্পন্দন অনুভব করুন।",
+        "en": "Place a hand on your heart. Feel it beating."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "self_1",
+      "instruction_text": {
+        "bn": "মনে মনে বলুন: আমি নিরাপদ থাকি। আমি সুস্থ থাকি। আমি ভালোবাসায় থাকি।",
+        "en": "Silently say: May I be safe. May I be healthy. May I be loved."
+      },
+      "duration_sec": 20,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "self_2",
+      "instruction_text": {
+        "bn": "আবার: আমি নিরাপদ থাকি। আমি সুস্থ থাকি। আমি ভালোবাসায় থাকি।",
+        "en": "Again: May I be safe. May I be healthy. May I be loved."
+      },
+      "duration_sec": 20,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "baby_intro",
+      "instruction_text": {
+        "bn": "এখন আপনার শিশুকে মনে আনুন। তাকে আপনার সাথে অনুভব করুন।",
+        "en": "Now bring your baby to mind. Feel them with you."
+      },
+      "duration_sec": 15,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "baby_1",
+      "instruction_text": {
+        "bn": "তুমি নিরাপদ থাকো। তুমি শক্তিশালী হও। তুমি ভালোবাসায় থাকো।",
+        "en": "May you be safe. May you grow strong. May you feel loved."
+      },
+      "duration_sec": 20,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "baby_2",
+      "instruction_text": {
+        "bn": "তুমি নিরাপদ থাকো। তুমি শক্তিশালী হও। তুমি ভালোবাসায় থাকো।",
+        "en": "May you be safe. May you grow strong. May you feel loved."
+      },
+      "duration_sec": 20,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "breathe",
+      "instruction_text": {
+        "bn": "ভালোবাসা শ্বাসে নিন। ভয় শ্বাসে বের করুন।",
+        "en": "Breathe love in. Breathe out any fear."
+      },
+      "duration_sec": 20,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "in": 4, "out": 6 }
+    },
+    {
+      "id": "close",
+      "instruction_text": {
+        "bn": "আপনি ইতিমধ্যেই একজন অসাধারণ মা।",
+        "en": "You are already a wonderful mother."
+      },
+      "duration_sec": 15,
+      "tara_mood": "happy",
+      "breathing_pace": null
+    }
+  ]
+}

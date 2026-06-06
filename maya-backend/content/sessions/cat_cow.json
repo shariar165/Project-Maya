@@ -1,0 +1,105 @@
+{
+  "id": "cat_cow",
+  "category": "move",
+  "title": { "bn": "ক্যাট-কাউ স্ট্রেচ", "en": "Cat-Cow Stretch" },
+  "subtitle": { "bn": "৪ মিনিট · মেরুদণ্ড মুক্তি", "en": "4 min · Spinal Release" },
+  "duration_sec": 240,
+  "allowed_trimesters": [1, 2],
+  "contraindications": ["preterm_labor_risk"],
+  "source": "ACOG – Safe Exercises in Pregnancy",
+  "color_from": "#D5EBE0",
+  "color_to": "#E5EDD5",
+  "icon": "🐱",
+  "steps": [
+    {
+      "id": "intro",
+      "instruction_text": {
+        "bn": "ক্যাট-কাউ আস্তে মেরুদণ্ড সচল রাখে।",
+        "en": "Cat-cow gently mobilizes your spine."
+      },
+      "duration_sec": 10,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "position",
+      "instruction_text": {
+        "bn": "হাত ও হাঁটুতে আসুন — কব্জি কাঁধের নিচে, হাঁটু কোমরের নিচে।",
+        "en": "Come onto hands and knees — wrists under shoulders, knees under hips."
+      },
+      "duration_sec": 12,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "cow_1",
+      "instruction_text": {
+        "bn": "কাউ: শ্বাস নিন, পেট নিচে নামুক, মাথা তুলুন...",
+        "en": "Cow: breathe in, let your belly drop, lift your gaze..."
+      },
+      "duration_sec": 20,
+      "tara_mood": "talking",
+      "breathing_pace": { "in": 4 }
+    },
+    {
+      "id": "cat_1",
+      "instruction_text": {
+        "bn": "ক্যাট: শ্বাস ছাড়ুন, পিঠ গোল করুন, মাথা নামুক...",
+        "en": "Cat: breathe out, round your back up like a cat..."
+      },
+      "duration_sec": 20,
+      "tara_mood": "talking",
+      "breathing_pace": { "out": 4 }
+    },
+    {
+      "id": "cow_2",
+      "instruction_text": {
+        "bn": "কাউ... শ্বাস নিন...",
+        "en": "Cow again... breathe in..."
+      },
+      "duration_sec": 20,
+      "tara_mood": "talking",
+      "breathing_pace": { "in": 4 }
+    },
+    {
+      "id": "cat_2",
+      "instruction_text": {
+        "bn": "ক্যাট... শ্বাস ছাড়ুন...",
+        "en": "Cat... breathe out..."
+      },
+      "duration_sec": 20,
+      "tara_mood": "talking",
+      "breathing_pace": { "out": 4 }
+    },
+    {
+      "id": "flow",
+      "instruction_text": {
+        "bn": "এদের মধ্যে প্রবাহিত হোন... শ্বাস নিন... কাউ... ছাড়ুন... ক্যাট...",
+        "en": "Flow between them... in... cow... out... cat..."
+      },
+      "duration_sec": 40,
+      "tara_mood": "talking",
+      "breathing_pace": { "in": 4, "out": 4 }
+    },
+    {
+      "id": "rest",
+      "instruction_text": {
+        "bn": "মাঝামাঝি আসুন। এখানে বিশ্রাম নিন।",
+        "en": "Come to neutral. Rest here."
+      },
+      "duration_sec": 15,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "close",
+      "instruction_text": {
+        "bn": "এই মৃদু ঢেউ আপনার শিশুকে সঠিক অবস্থানে আসতে সাহায্য করে।",
+        "en": "These gentle waves help your baby shift into position."
+      },
+      "duration_sec": 12,
+      "tara_mood": "happy",
+      "breathing_pace": null
+    }
+  ]
+}

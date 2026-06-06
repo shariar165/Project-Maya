@@ -1,0 +1,105 @@
+{
+  "id": "peaceful_visualization",
+  "category": "calm",
+  "title": { "bn": "শান্তিময় কল্পনা", "en": "Peaceful Visualization" },
+  "subtitle": { "bn": "৫ মিনিট · মন শান্ত করুন", "en": "5 min · Mind at Peace" },
+  "duration_sec": 300,
+  "allowed_trimesters": [1, 2, 3],
+  "contraindications": [],
+  "source": "WHO Perinatal Mental Health – Guided Imagery",
+  "color_from": "#F2EBDA",
+  "color_to": "#FBE5D6",
+  "icon": "🌅",
+  "steps": [
+    {
+      "id": "intro",
+      "instruction_text": {
+        "bn": "চলুন একসাথে একটি যাত্রায় যাই।",
+        "en": "Let's take a journey together."
+      },
+      "duration_sec": 8,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "place",
+      "instruction_text": {
+        "bn": "চোখ বন্ধ করুন। একটি শান্ত, নিরাপদ জায়গা কল্পনা করুন...",
+        "en": "Close your eyes. Imagine a quiet, peaceful place..."
+      },
+      "duration_sec": 12,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "scene",
+      "instruction_text": {
+        "bn": "মৃদু বাতাস। নরম আলো। আপনি সম্পূর্ণ নিরাপদ অনুভব করছেন।",
+        "en": "A gentle breeze. Soft light. You feel completely safe."
+      },
+      "duration_sec": 22,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "baby",
+      "instruction_text": {
+        "bn": "আপনার শিশু এই জায়গায় আপনার সাথে আছে। শান্ত ও বড় হচ্ছে।",
+        "en": "Your baby is with you in this place. Peaceful and growing."
+      },
+      "duration_sec": 22,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "face",
+      "instruction_text": {
+        "bn": "মনে মনে তাদের মুখ দেখতে পাচ্ছেন — শান্ত ও অপেক্ষায়।",
+        "en": "You can see their face in your mind — serene and waiting."
+      },
+      "duration_sec": 22,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "no_worry",
+      "instruction_text": {
+        "bn": "এই জায়গায় কোনো উদ্বেগ নেই। শুধু উষ্ণতা।",
+        "en": "In this place, there is no worry. Only warmth."
+      },
+      "duration_sec": 20,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "breathe",
+      "instruction_text": {
+        "bn": "শান্তি শ্বাসে নিন। আপনার শিশুতে নিয়ে যান।",
+        "en": "Breathe the peace into your body. Into your baby."
+      },
+      "duration_sec": 22,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "in": 4, "out": 6 }
+    },
+    {
+      "id": "last",
+      "instruction_text": {
+        "bn": "এখানে আরেকটি দীর্ঘ শ্বাস নিন...",
+        "en": "Take one more long breath here..."
+      },
+      "duration_sec": 15,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "close",
+      "instruction_text": {
+        "bn": "ফিরে যাওয়ার সময় এই শান্তি সাথে নিয়ে যান।",
+        "en": "Carry this peace with you when you return."
+      },
+      "duration_sec": 15,
+      "tara_mood": "happy",
+      "breathing_pace": null
+    }
+  ]
+}

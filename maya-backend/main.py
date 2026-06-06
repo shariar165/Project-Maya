@@ -24,7 +24,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
 from config import parse_llm_json
-from db.models import AuthSession, Appointment, HealthLog, Patient, ProactiveMessage
+from db.models import AuthSession, Appointment, HealthLog, Patient, ProactiveMessage, WellnessSession
 from db.session import get_db, init_db
 from agents.orchestrator import get_graph, MayaState
 from agents.response_composer import compose_tara_response
@@ -144,6 +144,14 @@ class UpdateProfileRequest(BaseModel):
     is_first_pregnancy: Optional[bool] = None
     guardian_name:      Optional[str]  = None
     guardian_phone:     Optional[str]  = None
+
+
+class WellnessCompleteRequest(BaseModel):
+    patient_id:          str
+    session_template_id: str
+    completion_pct:      float = 100.0
+    mood_before:         Optional[str] = None
+    mood_after:          Optional[str] = None
 
 
 # ── Auth endpoints ────────────────────────────────────────────────────────────
@@ -574,6 +582,143 @@ async def generate_report(health_worker_id: str, week_ending: str):
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename=report_{week_ending}.pdf"},
     )
+
+
+# ── Wellness endpoints ────────────────────────────────────────────────────────
+
+@app.get("/wellness/recommend")
+async def wellness_recommend(
+    mood: str = "okay",
+    week: int = 20,
+    conditions: str = "",
+):
+    """Return the best session for a given mood + pregnancy week, plus up to 3 alternates."""
+    from wellness.recommender import recommend
+    cond_list = [c.strip() for c in conditions.split(",") if c.strip()]
+    try:
+        result = recommend(mood=mood, week=week, conditions=cond_list)
+    except Exception as e:
+        logging.error("[Wellness] recommend error: %s", e)
+        raise HTTPException(status_code=500, detail="Could not compute recommendation")
+    return result
+
+
+@app.get("/wellness/sessions")
+async def wellness_sessions(
+    category: Optional[str] = None,
+    week: int = 20,
+    trimester: Optional[int] = None,
+):
+    """Browse session library filtered by category and trimester."""
+    from wellness.session_loader import get_sessions_by_category
+    try:
+        sessions = get_sessions_by_category(
+            category=category or None,
+            trimester=trimester,
+            week=week if trimester is None else None,
+        )
+    except Exception as e:
+        logging.error("[Wellness] sessions list error: %s", e)
+        raise HTTPException(status_code=500, detail="Could not load sessions")
+    # Strip heavy steps array for library browse — client fetches full session separately
+    return [
+        {k: v for k, v in s.items() if k != "steps"}
+        for s in sessions
+    ]
+
+
+@app.get("/wellness/sessions/{session_id}")
+async def wellness_session_detail(session_id: str):
+    """Return the full session JSON including steps."""
+    from wellness.session_loader import get_session_by_id
+    session = get_session_by_id(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    return session
+
+
+@app.post("/wellness/sessions/complete")
+async def wellness_complete(
+    req: WellnessCompleteRequest,
+    authorization: Optional[str] = Header(None),
+):
+    """Log a completed (or partially completed) wellness session."""
+    is_guest = req.patient_id in ("guest", "", None)
+    if not is_guest:
+        if not authorization or not authorization.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Missing Authorization header")
+        token = authorization.split(" ", 1)[1]
+        with get_db() as db:
+            session = db.query(AuthSession).filter(
+                AuthSession.token == token,
+                AuthSession.patient_id == req.patient_id,
+            ).first()
+            if not session:
+                raise HTTPException(status_code=401, detail="Invalid token")
+
+    if not is_guest:
+        with get_db() as db:
+            ws = WellnessSession(
+                patient_id=req.patient_id,
+                session_template_id=req.session_template_id,
+                completed_at=datetime.utcnow(),
+                completion_pct=req.completion_pct,
+                mood_before=req.mood_before,
+                mood_after=req.mood_after,
+            )
+            db.add(ws)
+
+        # Log mood_after to health_logs so the mood graph picks it up
+        if req.mood_after:
+            from tools.patient_tool import log_health_data
+            log_health_data(req.patient_id, "mood", req.mood_after)
+
+    return {"status": "logged"}
+
+
+@app.get("/wellness/mood-history/{patient_id}")
+async def wellness_mood_history(
+    patient_id: str,
+    days: int = 7,
+    authorization: Optional[str] = Header(None),
+):
+    """Return the last N days of mood logs for the mood graph."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    token = authorization.split(" ", 1)[1]
+    with get_db() as db:
+        session = db.query(AuthSession).filter(
+            AuthSession.token == token,
+            AuthSession.patient_id == patient_id,
+        ).first()
+        if not session:
+            raise HTTPException(status_code=401, detail="Invalid token")
+
+        cutoff = datetime.utcnow() - timedelta(days=days)
+        logs = (
+            db.query(HealthLog)
+            .filter(
+                HealthLog.patient_id == patient_id,
+                HealthLog.data_type == "mood",
+                HealthLog.created_at >= cutoff,
+            )
+            .order_by(HealthLog.created_at.asc())
+            .all()
+        )
+
+        _MOOD_SCORES = {
+            "happy": 5, "tender": 4, "okay": 3,
+            "tired": 2, "heavy": 2, "worried": 1,
+        }
+        result = [
+            {
+                "date": l.created_at.date().isoformat(),
+                "mood": l.value,
+                "score": _MOOD_SCORES.get(l.value.lower(), 3),
+            }
+            for l in logs
+        ]
+    return result
 
 
 # ── n8n health check ──────────────────────────────────────────────────────────

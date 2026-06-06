@@ -21,11 +21,18 @@ class MayaState(TypedDict):
     # Output
     emotion:              str   # happy | caring | alert | celebration | celebration2 | singing | sleepy
     message:              str
-    tara_action:          str   # speak | alert_hold | suggest_meditation | celebration | singing
+    tara_action:          str   # speak | alert_hold | suggest_meditation | celebration | singing | crisis_support | share_resources
     voice_text:           str
     guardian_alert:       Optional[dict]
     risk_score:           Optional[float]
     tara_hold_seconds:    Optional[int]
+
+    # Emotional safety fields (written by emotion_agent)
+    distress_level:       str          # mild | moderate | severe | crisis
+    crisis:               bool         # True when suicidal/self-harm signal detected
+    escalate:             bool         # True when human help should be surfaced
+    resources:            dict         # helpline dict surfaced to frontend
+    suggest_meditation:   bool
 
 
 def compose_tara_response(state: MayaState) -> dict:
@@ -39,6 +46,8 @@ def compose_tara_response(state: MayaState) -> dict:
         "suggest_meditation": {"video": "caring",        "hold": False, "trigger": "meditation"},
         "celebration":        {"video": "celebration2",  "hold": False},
         "singing":            {"video": "singing",       "hold": False, "trigger": "singing"},
+        "crisis_support":     {"video": "caring",        "hold": True},
+        "share_resources":    {"video": "caring",        "hold": False},
     }
     frontend_action = action_map.get(tara_action, {"video": emotion, "hold": False})
 
@@ -52,7 +61,11 @@ def compose_tara_response(state: MayaState) -> dict:
         "hold_seconds":   hold_seconds,
         "message":        state.get("message", ""),
         "voice_text":     state.get("voice_text", ""),
-        "guardian_alert": state.get("guardian_alert"),
-        "agent_used":     state.get("agent_used", "unknown"),
-        "risk_score":     state.get("risk_score"),
+        "guardian_alert":  state.get("guardian_alert"),
+        "agent_used":      state.get("agent_used", "unknown"),
+        "risk_score":      state.get("risk_score"),
+        "distress_level":  state.get("distress_level", "mild"),
+        "crisis":          state.get("crisis", False),
+        "escalate":        state.get("escalate", False),
+        "resources":       state.get("resources", {}),
     }

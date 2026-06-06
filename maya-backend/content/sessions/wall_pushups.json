@@ -1,0 +1,115 @@
+{
+  "id": "wall_pushups",
+  "category": "move",
+  "title": { "bn": "ওয়াল পুশ-আপ", "en": "Wall Push-ups" },
+  "subtitle": { "bn": "৪ মিনিট · উপরের শরীর", "en": "4 min · Upper Body" },
+  "duration_sec": 240,
+  "allowed_trimesters": [1, 2, 3],
+  "contraindications": [],
+  "source": "NHS – Safe Resistance Exercises in Pregnancy",
+  "color_from": "#D5EBE0",
+  "color_to": "#E5EDD5",
+  "icon": "🤸",
+  "steps": [
+    {
+      "id": "intro",
+      "instruction_text": {
+        "bn": "ওয়াল পুশ-আপ মেঝে ব্যবহার ছাড়াই উপরের শরীর শক্তিশালী রাখে।",
+        "en": "Wall push-ups keep your upper body strong without any floor work."
+      },
+      "duration_sec": 10,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "position",
+      "instruction_text": {
+        "bn": "দেওয়ালের সামনে হাতের দূরত্বে দাঁড়ান, হাত বুকের উচ্চতায়।",
+        "en": "Stand facing a wall, arms' length away, hands on the wall at chest height."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "push_1",
+      "instruction_text": {
+        "bn": "আস্তে কনুই ভাঁজ করুন এবং দেওয়ালের দিকে হেলুন...",
+        "en": "Slowly bend your elbows and lean toward the wall..."
+      },
+      "duration_sec": 12,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "push_back",
+      "instruction_text": {
+        "bn": "ফিরে আসুন। ধাক্কার সময় শ্বাস ছাড়ুন।",
+        "en": "Push back to start. Breathe out as you push."
+      },
+      "duration_sec": 10,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "set_1",
+      "instruction_text": {
+        "bn": "একসাথে ১০টি করি... আস্তে...",
+        "en": "Let's do 10 together... slowly..."
+      },
+      "duration_sec": 40,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "rest_1",
+      "instruction_text": {
+        "bn": "১০ সেকেন্ড বিশ্রাম।",
+        "en": "Rest for 10 seconds."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "set_2",
+      "instruction_text": {
+        "bn": "আরও ১০টি — আপনি ভাবার চেয়ে শক্তিশালী।",
+        "en": "10 more — you're stronger than you think."
+      },
+      "duration_sec": 40,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "rest_2",
+      "instruction_text": {
+        "bn": "বিশ্রাম।",
+        "en": "Rest."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "set_3",
+      "instruction_text": {
+        "bn": "শেষ ১০টি। প্রায় শেষ।",
+        "en": "Last set of 10. Almost done."
+      },
+      "duration_sec": 40,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "close",
+      "instruction_text": {
+        "bn": "শাবাশ। আপনার বাহু ও পিঠ কৃতজ্ঞ।",
+        "en": "Well done. Your arms and back thank you."
+      },
+      "duration_sec": 12,
+      "tara_mood": "happy",
+      "breathing_pace": null
+    }
+  ]
+}

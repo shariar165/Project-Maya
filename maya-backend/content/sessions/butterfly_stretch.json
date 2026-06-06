@@ -1,0 +1,105 @@
+{
+  "id": "butterfly_stretch",
+  "category": "move",
+  "title": { "bn": "বাটারফ্লাই স্ট্রেচ", "en": "Butterfly Stretch" },
+  "subtitle": { "bn": "৩ মিনিট · হিপ খোলা", "en": "3 min · Hip Opening" },
+  "duration_sec": 180,
+  "allowed_trimesters": [1, 2, 3],
+  "contraindications": ["symphysis_pubis_dysfunction"],
+  "source": "NHS – Pregnancy Exercises: Hip Openers",
+  "color_from": "#D5EBE0",
+  "color_to": "#E5EDD5",
+  "icon": "🦋",
+  "steps": [
+    {
+      "id": "intro",
+      "instruction_text": {
+        "bn": "বাটারফ্লাই আপনার হিপ এবং ভেতরের উরু খুলে দেয়।",
+        "en": "The butterfly opens your hips and inner thighs."
+      },
+      "duration_sec": 10,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "position",
+      "instruction_text": {
+        "bn": "আরামদায়কভাবে বসুন, পায়ের তলা একসাথে আনুন।",
+        "en": "Sit comfortably, bring the soles of your feet together."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "flap",
+      "instruction_text": {
+        "bn": "পা ধরুন এবং হাঁটু আস্তে উপরে-নিচে নাড়ুন — প্রজাপতির ডানার মতো।",
+        "en": "Hold your feet and gently flap your knees up and down — like butterfly wings."
+      },
+      "duration_sec": 25,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "press",
+      "instruction_text": {
+        "bn": "এখন হাঁটু আস্তে মাটির দিকে চাপ দিন। আরামদায়ক পর্যন্তই।",
+        "en": "Now press knees gently toward the floor. Only as far as is comfortable."
+      },
+      "duration_sec": 20,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "hold",
+      "instruction_text": {
+        "bn": "এখানে ধরুন... শ্বাস নিন...",
+        "en": "Hold here... breathe..."
+      },
+      "duration_sec": 15,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "in": 4, "out": 6 }
+    },
+    {
+      "id": "flap_2",
+      "instruction_text": {
+        "bn": "ছেড়ে দিন। আবার হালকা নাড়ুন...",
+        "en": "Release. Flap again lightly..."
+      },
+      "duration_sec": 15,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "long_hold",
+      "instruction_text": {
+        "bn": "১০ গুণে হাঁটু নিচে রাখুন... ১... ২... ৩...",
+        "en": "Hold knees down for 10 counts... 1... 2... 3..."
+      },
+      "duration_sec": 20,
+      "tara_mood": "talking",
+      "breathing_pace": null
+    },
+    {
+      "id": "shake",
+      "instruction_text": {
+        "bn": "ছেড়ে দিন। পা একটু ঝাঁকান।",
+        "en": "Release. Shake out your legs."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "close",
+      "instruction_text": {
+        "bn": "আপনার হিপ কৃতজ্ঞ। আপনার শিশুর আরও জায়গা হয়েছে।",
+        "en": "Your hips are grateful. Your baby has more room."
+      },
+      "duration_sec": 12,
+      "tara_mood": "happy",
+      "breathing_pace": null
+    }
+  ]
+}

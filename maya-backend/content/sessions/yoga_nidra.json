@@ -1,0 +1,115 @@
+{
+  "id": "yoga_nidra",
+  "category": "sleep",
+  "title": { "bn": "ইয়োগা নিদ্রা", "en": "Short Yoga Nidra" },
+  "subtitle": { "bn": "১০ মিনিট · যোগিক ঘুম", "en": "10 min · Yogic Sleep" },
+  "duration_sec": 600,
+  "allowed_trimesters": [1, 2, 3],
+  "contraindications": [],
+  "source": "Yoga in Pregnancy – Adaptation of Traditional Yoga Nidra",
+  "color_from": "#D8D5F0",
+  "color_to": "#C8D5F0",
+  "icon": "✨",
+  "steps": [
+    {
+      "id": "intro",
+      "instruction_text": {
+        "bn": "ইয়োগা নিদ্রা হলো যোগিক ঘুম — গর্ভবতী শরীরের জন্য গভীরভাবে বিশ্রামদায়ক।",
+        "en": "Yoga Nidra is yogic sleep — deeply restful for pregnant bodies."
+      },
+      "duration_sec": 10,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "position",
+      "instruction_text": {
+        "bn": "বাঁ দিকে শুয়ে পড়ুন, চোখ বন্ধ করুন। শরীর ভারী হোক।",
+        "en": "Lie on your left side, eyes closed. Let your body be heavy."
+      },
+      "duration_sec": 10,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "sankalpa",
+      "instruction_text": {
+        "bn": "সংকল্প: আজ রাতে আমি গভীরভাবে বিশ্রাম নেব এবং সতেজ হয়ে উঠব।",
+        "en": "Resolve: tonight I will rest deeply and wake refreshed."
+      },
+      "duration_sec": 12,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "whole_body",
+      "instruction_text": {
+        "bn": "পুরো শরীর অনুভব করুন। ভারী। স্থির। শ্বাস নিচ্ছে।",
+        "en": "Feel your body as a whole. Heavy. Still. Breathing."
+      },
+      "duration_sec": 25,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "right_arm",
+      "instruction_text": {
+        "bn": "মনোযোগ ঘুরান: ডান বুড়ো আঙুল... আঙুলগুলো... হাতের তালু... কব্জি...",
+        "en": "Rotate awareness: right thumb... fingers... palm... wrist..."
+      },
+      "duration_sec": 35,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "right_chest",
+      "instruction_text": {
+        "bn": "ডান কনুই... কাঁধ... বুকের ডান দিক...",
+        "en": "Right elbow... shoulder... right side of chest..."
+      },
+      "duration_sec": 30,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "left_arm",
+      "instruction_text": {
+        "bn": "বাঁ বুড়ো আঙুল... আঙুলগুলো... হাতের তালু... কব্জি... কনুই... কাঁধ...",
+        "en": "Left thumb... fingers... palm... wrist... elbow... shoulder..."
+      },
+      "duration_sec": 35,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "lower_body",
+      "instruction_text": {
+        "bn": "উভয় পা... উভয় পা... পেট এবং পিঠ একসাথে...",
+        "en": "Both feet... both legs... belly and back together..."
+      },
+      "duration_sec": 30,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "whole",
+      "instruction_text": {
+        "bn": "পুরো শরীর, ভারী এবং সম্পূর্ণ বিশ্রামে।",
+        "en": "Your whole body, heavy and completely at rest."
+      },
+      "duration_sec": 25,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "close",
+      "instruction_text": {
+        "bn": "শ্বাস নিন... এবং ঘুম আসতে দিন।",
+        "en": "Breathe... and let sleep find you."
+      },
+      "duration_sec": 25,
+      "tara_mood": "caring",
+      "breathing_pace": { "in": 4, "out": 8 }
+    }
+  ]
+}

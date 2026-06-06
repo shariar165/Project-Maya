@@ -1,0 +1,115 @@
+{
+  "id": "body_scan",
+  "category": "calm",
+  "title": { "bn": "বডি স্ক্যান মেডিটেশন", "en": "Body Scan Meditation" },
+  "subtitle": { "bn": "৫ মিনিট · গভীর শিথিলায়ন", "en": "5 min · Deep Relaxation" },
+  "duration_sec": 300,
+  "allowed_trimesters": [1, 2, 3],
+  "contraindications": [],
+  "source": "WHO Mental Health in Pregnancy – Mindfulness Practices",
+  "color_from": "#F2EBDA",
+  "color_to": "#FBE5D6",
+  "icon": "🌸",
+  "steps": [
+    {
+      "id": "intro",
+      "instruction_text": {
+        "bn": "আমরা আস্তে আপনার শরীরের প্রতিটি অংশ পরিদর্শন করব।",
+        "en": "We're going to gently visit every part of your body."
+      },
+      "duration_sec": 10,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "position",
+      "instruction_text": {
+        "bn": "পাশে আরামদায়কভাবে শুয়ে পড়ুন বা বসুন।",
+        "en": "Lie comfortably on your side, or sit if preferred."
+      },
+      "duration_sec": 8,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "breath",
+      "instruction_text": {
+        "bn": "আপনার শ্বাস লক্ষ্য করুন। পরিবর্তন করবেন না — শুধু অনুভব করুন।",
+        "en": "Notice your breath. Don't change it — just feel it."
+      },
+      "duration_sec": 15,
+      "tara_mood": "sleepy",
+      "breathing_pace": { "in": 4, "out": 6 }
+    },
+    {
+      "id": "feet",
+      "instruction_text": {
+        "bn": "মনোযোগ পায়ে নিয়ে যান। কোনো টান আছে? সেটা নরম হতে দিন...",
+        "en": "Bring attention to your feet. Any tension? Let it soften..."
+      },
+      "duration_sec": 20,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "legs",
+      "instruction_text": {
+        "bn": "পায়ের পেশী এবং হাঁটুতে যান। কোনো টান ছেড়ে দিন...",
+        "en": "Move to your calves and knees. Release any tightness..."
+      },
+      "duration_sec": 20,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "belly",
+      "instruction_text": {
+        "bn": "আপনার পেট, যেখানে আপনার শিশু বিশ্রাম নিচ্ছে। এখানে উষ্ণতা অনুভব করুন...",
+        "en": "Your belly, where your baby rests. Feel warmth here..."
+      },
+      "duration_sec": 22,
+      "tara_mood": "caring",
+      "breathing_pace": null
+    },
+    {
+      "id": "chest",
+      "instruction_text": {
+        "bn": "বুক ও কাঁধ। নামতে দিন। আপনি নিরাপদ।",
+        "en": "Your chest and shoulders. Let them drop. You're safe."
+      },
+      "duration_sec": 22,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "face",
+      "instruction_text": {
+        "bn": "আপনার মুখ। চোয়াল খুলুন। চোখ নরম করুন।",
+        "en": "Your face. Unclench your jaw. Soften your eyes."
+      },
+      "duration_sec": 15,
+      "tara_mood": "sleepy",
+      "breathing_pace": null
+    },
+    {
+      "id": "whole",
+      "instruction_text": {
+        "bn": "পুরো শরীর একসাথে — ভারী, উষ্ণ, সমর্থিত।",
+        "en": "Your whole body at once — heavy, warm, supported."
+      },
+      "duration_sec": 20,
+      "tara_mood": "idle",
+      "breathing_pace": null
+    },
+    {
+      "id": "close",
+      "instruction_text": {
+        "bn": "যখন প্রস্তুত, আস্তে ফিরে আসুন।",
+        "en": "Whenever you're ready, gently return."
+      },
+      "duration_sec": 15,
+      "tara_mood": "happy",
+      "breathing_pace": null
+    }
+  ]
+}
