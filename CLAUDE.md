@@ -30,10 +30,13 @@ python ingest_all.py
 ANTHROPIC_API_KEY=
 GEMINI_API_KEY=
 GROQ_API_KEY=
-ELEVENLABS_API_KEY=
-TARA_VOICE_ID=9BWtsMINqrJLrRacOk9x
 DATABASE_URL=sqlite:///./maya.db
 MCP_API_KEY=maya-mcp-secret-key-change-in-production
+# Optional — TTS waterfall (see TTS section below)
+GOOGLE_TTS_API_KEY=
+# ElevenLabs is deprecated (elevenlabs_OLD.py); key not used by running code
+ELEVENLABS_API_KEY=
+TARA_VOICE_ID=9BWtsMINqrJLrRacOk9x
 ```
 
 ## Frontend architecture
@@ -42,21 +45,30 @@ MCP_API_KEY=maya-mcp-secret-key-change-in-production
 
 1. `ios-frame.jsx` — iOS frame, status bar, keyboard components
 2. `tweaks-panel.jsx` — live-editing panel + `useTweaks` hook
-3. `auth.jsx` — `AuthScreen`, `OTPScreen`, `RegisterScreen`; uses `localStorage` for session/user
-4. `tara.jsx` — Tara companion character (video-based, emotion-driven)
-5. `home.jsx` — shared UI primitives (`Card`, `Pill`, `MeshBg`, `Grain`, `WeekRing`, `Waveform`) + `HomeScreen`
-6. `screens-1.jsx` — `JourneyScreen`, `ChatScreen`, `VoiceScreen`
-7. `screens-2.jsx` — `WellnessScreen`, `CareScreen`
-8. `screens-3.jsx` — `SplashScreen`, `ProfileScreen`, `SettingsScreen`, `RiskScreen`
-9. `app.jsx` — `Onboarding`, `BottomNav`, root `App` component
+3. `strings.jsx` — plain-JS localization (no JSX); must load before any screen
+4. `auth.jsx` — `AuthScreen`, `OTPScreen`, `RegisterScreen`; uses `localStorage` for session/user
+5. `tara.jsx` — Tara companion character (video-based, emotion-driven)
+6. `home.jsx` — shared UI primitives (`Card`, `Pill`, `MeshBg`, `Grain`, `WeekRing`, `Waveform`) + `HomeScreen`
+7. `screens-1.jsx` — `JourneyScreen`, `ChatScreen`, `VoiceScreen`
+8. `screens-2.jsx` — `WellnessScreen`, `CareScreen`
+9. `screens-3.jsx` — `SplashScreen`, `ProfileScreen`, `SettingsScreen`, `RiskScreen`
+10. `app.jsx` — `Onboarding`, `BottomNav`, root `App` component
 
 **No module system.** Every public export is assigned to `window.*` (e.g. `window.MayaApp = App`, `window.Tara = Tara`). Cross-file references use `window.ComponentName`.
 
 **State flows top-down** from `App` via props: `{ state, setState, openScreen, tweak, setTweak }`.
 
+**Week → month displayed data:** Always derive `displayWeek` as `_lsUser.pregnancyWeek ?? state.week` (localStorage first) — not bare `state.week` — to avoid showing stale tweakDefault values. HomeScreen, JourneyScreen, and ProfileScreen all follow this pattern.
+
+## Localization
+
+`strings.jsx` is a plain-JS file (no JSX, no React) that must load before any screen. It defines `window.MAYA_STRINGS` (keys in `en`, `bn`, `mixed`) and exposes `window.tStr(key, lang, type)` — the resolver called by every screen to get translated text. The `lang` tweak key (`bn` | `en` | `mixed`) flows down from `App` and is passed to `tStr`.
+
 ## Tweaks panel
 
 Defaults live in `app.jsx` inside `/*EDITMODE-BEGIN*/` … `/*EDITMODE-END*/` markers. Current tweakable keys: `theme` (`dawn`/`dusk`/`night`), `week` (4–40), `mothersName`, `taraMood`, `lang`.
+
+The tweak-sync effect (`app.jsx`) overwrites `state.week` from `t.week` on mount before the auth effect settles. Screens must therefore read from `localStorage.maya_user.pregnancyWeek` directly rather than relying solely on `state.week` for their initial render.
 
 ## Tara character
 
@@ -87,12 +99,28 @@ POST /ask → classify_intent (orchestrator.py)
 
 **RAG pipeline:** ChromaDB (`./chroma_db`) with hybrid BM25 + vector search + Reciprocal Rank Fusion, then BGE reranking (`rag/retriever.py`). Source PDFs live in `maya-backend/docs/raw/`.
 
-**Database:** SQLite by default (`maya.db`), SQLAlchemy ORM. Models: `Patient`, `AuthSession`, `HealthLog`, `Conversation`, `Appointment`, `ProactiveMessage`, `EmergencyLog`, `Reminder`. Always access ORM attributes inside the `with get_db() as db:` context — extracting primitives before the block closes to avoid `DetachedInstanceError`.
+**Database:** SQLite by default (`maya.db`), SQLAlchemy ORM. Models: `Patient`, `AuthSession`, `HealthLog`, `Conversation`, `Appointment`, `ProactiveMessage`, `PatientBaseline`, `EmergencyLog`, `Reminder`, `IngestionLog`, `WellnessSession`. Always access ORM attributes inside the `with get_db() as db:` context — extracting primitives before the block closes to avoid `DetachedInstanceError`.
 
 **Scheduled jobs** (APScheduler, started in `lifespan`):
 - `scan_all_patients` — every 6 hours (proactive health monitoring)
 - `send_medication_reminders` — 3:00 UTC (9am BD)
-- `send_weekly_summary` — Sunday 2:00 UTC
+- `send_weekly_summary` — Sunday 1:00 UTC
+- `send_good_morning_messages` — 2:00 UTC daily
+- `process_retry_queue` — every 30 minutes (retries failed guardian alerts)
+
+**TTS** (`tts/tts_router.py`): waterfall — Edge TTS (Microsoft, free, no key) → Google Cloud TTS (optional `GOOGLE_TTS_API_KEY`) → browser Web Speech API fallback. Returns `(audio_bytes, False)` or `(None, True)` to signal frontend fallback. ElevenLabs is removed (`tts/elevenlabs_OLD.py`).
+
+**Monitoring module** (`monitoring/`): proactive patient scanning separate from the request pipeline.
+- `monitoring_agent.py` — `scan_all_patients()`, `send_medication_reminders()`, etc.; uses `PatientBaseline` for personalized BP thresholds and a ranked concern severity system.
+- `baseline_manager.py` — builds a per-patient baseline (BP, weight, engagement) over the first N days; `get_bp_alert_threshold()` uses it for dynamic alerting.
+- `emotion_classifier.py` — logistic regression classifier trained from `docs/raw/data/merged_emotion.csv`; `build_emotion_classifier()` is warm-started at server startup; `score_conversation_turns()` scores recent messages.
+- `message_templates.py` — Bangla/English proactive message templates keyed by concern type.
+
+**Wellness module** (`wellness/` + `content/sessions/`):
+- `wellness/session_loader.py` — loads and caches the 15 JSON session templates from `content/sessions/` (breathing, movement, calm, sleep categories); `_trimester_from_week()` maps week → trimester 1/2/3.
+- `wellness/recommender.py` — `recommend(mood, week, conditions)` returns `{primary, alternates}` filtered by trimester and contraindications. Mood keys: `tender | happy | okay | tired | worried | heavy`.
+- Sessions are JSON files in `content/sessions/` with fields: `id`, `category`, `allowed_trimesters`, `contraindications`, `steps`.
+- API: `GET /wellness/recommend?patient_id=&mood=`, `GET /wellness/sessions`, `POST /wellness/sessions/complete`. Completion is recorded in the `WellnessSession` DB table.
 
 **MCP servers** expose ChromaDB and patient DB as HTTP tool endpoints for direct Claude API calls.
 
