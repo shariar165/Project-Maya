@@ -150,31 +150,287 @@ function AppHeader({ onSettings, onProfile, t }) {
 // ──────────────────────────────────────────────────────────────────
 // PROFILE
 // ──────────────────────────────────────────────────────────────────
+function getWeekInfo(week) {
+  const w = Math.min(40, Math.max(1, week || 1));
+  const trimesterKey = w <= 13 ? 'trimester1' : w <= 27 ? 'trimester2' : 'trimester3';
+  const fruit = (window.WEEK_FRUITS || {})[w] || { emoji: '🌱', name: 'tiny' };
+  return { trimesterKey, fetalEmoji: fruit.emoji, fetalName: fruit.name };
+}
+
+function ProfileEditModal({ profile, lang, L, saving, saveError, onSave, onCancel }) {
+  const [draft, setDraft] = React.useState({ ...profile });
+  const set = (k, v) => setDraft(d => ({ ...d, [k]: v }));
+  const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
+
+  const inputStyle = {
+    width: '100%', padding: '12px 14px', borderRadius: 14,
+    border: '1.5px solid rgba(61,40,64,0.12)',
+    background: 'rgba(255,255,255,0.85)', fontSize: 15,
+    fontFamily: 'var(--ui)', color: '#2A1A36', outline: 'none', boxSizing: 'border-box',
+  };
+  const labelStyle = { fontSize: 11, color: '#7A5E78', fontWeight: 600, marginBottom: 4, display: 'block' };
+
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, zIndex: 60,
+      background: 'linear-gradient(180deg, #FFEFE2 0%, #F4D7E5 60%, #E0D5F0 100%)',
+      overflow: 'auto', padding: '54px 22px 40px',
+    }}>
+      <Grain/>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+        <button onClick={onCancel} style={window.uiBtns.iconBtn}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3D2840" strokeWidth="2" strokeLinecap="round">
+            <path d="M15 18l-6-6 6-6"/>
+          </svg>
+        </button>
+        <div style={{ fontFamily: 'var(--display)', fontSize: 22, color: '#2A1A36', letterSpacing: '-0.01em', flex: 1 }}>
+          {L('editProfile')}
+        </div>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div>
+          <label style={labelStyle}>{L('fieldName')}</label>
+          <input style={inputStyle} value={draft.name || ''} onChange={e => set('name', e.target.value)} maxLength={80}/>
+        </div>
+
+        <div>
+          <label style={labelStyle}>{L('fieldWeek')} — {draft.pregnancyWeek || 20}</label>
+          <input type="range" min={4} max={40} step={1}
+            value={draft.pregnancyWeek || 20}
+            onChange={e => set('pregnancyWeek', Number(e.target.value))}
+            style={{ width: '100%', accentColor: '#3D2840' }}
+          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, color: '#9A8595' }}>
+            <span>Week 4</span><span>Week 40</span>
+          </div>
+        </div>
+
+        <div>
+          <label style={labelStyle}>{L('fieldAge')}</label>
+          <input style={inputStyle} type="number" min={14} max={60}
+            value={draft.age || ''} onChange={e => set('age', e.target.value ? Number(e.target.value) : null)}/>
+        </div>
+
+        <div>
+          <label style={labelStyle}>{L('fieldCity')}</label>
+          <input style={inputStyle} value={draft.city || ''} onChange={e => set('city', e.target.value)} maxLength={80}/>
+        </div>
+
+        <div>
+          <label style={labelStyle}>{L('fieldBlood')}</label>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 6 }}>
+            {BLOOD_GROUPS.map(bg => (
+              <button key={bg} onClick={() => set('bloodGroup', bg)} style={{
+                padding: '10px 6px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                fontSize: 13, fontWeight: 600,
+                background: draft.bloodGroup === bg ? '#3D2840' : 'rgba(255,255,255,0.85)',
+                color: draft.bloodGroup === bg ? '#FFF1E4' : '#2A1A36',
+              }}>{bg}</button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label style={labelStyle}>{L('fieldFirstPreg')}</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {[true, false].map(v => (
+              <button key={String(v)} onClick={() => set('isFirstPregnancy', v)} style={{
+                flex: 1, padding: '12px', borderRadius: 14, border: 'none', cursor: 'pointer',
+                fontSize: 14, fontWeight: 600,
+                background: draft.isFirstPregnancy === v ? '#3D2840' : 'rgba(255,255,255,0.85)',
+                color: draft.isFirstPregnancy === v ? '#FFF1E4' : '#2A1A36',
+              }}>
+                {v ? L('firstPregYes') : L('firstPregNo')}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label style={labelStyle}>{L('fieldLang')}</label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[{v:'bn',l:'বাংলা'},{v:'mixed',l:'Both'},{v:'en',l:'English'}].map(opt => (
+              <button key={opt.v} onClick={() => set('lang', opt.v)} style={{
+                flex: 1, padding: '10px 6px', borderRadius: 12, border: 'none', cursor: 'pointer',
+                fontSize: 13, fontWeight: 700,
+                background: draft.lang === opt.v ? '#3D2840' : 'rgba(255,255,255,0.85)',
+                color: draft.lang === opt.v ? '#FFF1E4' : '#2A1A36',
+              }}>{opt.l}</button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label style={labelStyle}>{L('fieldGuardianName')}</label>
+          <input style={inputStyle} value={draft.guardianName || ''} onChange={e => set('guardianName', e.target.value)} maxLength={80}/>
+        </div>
+
+        <div>
+          <label style={labelStyle}>{L('fieldGuardianPhone')}</label>
+          <input style={inputStyle} type="tel" value={draft.guardianPhone || ''} onChange={e => set('guardianPhone', e.target.value)} maxLength={20}/>
+        </div>
+
+        {saveError && (
+          <div style={{ fontSize: 12, color: '#C0392B', textAlign: 'center' }}>{saveError}</div>
+        )}
+
+        <button onClick={() => onSave(draft)} disabled={saving} style={{
+          padding: '16px', borderRadius: 99, border: 'none',
+          background: saving ? 'rgba(61,40,64,0.3)' : '#3D2840',
+          color: '#FFF1E4', fontSize: 15, fontWeight: 600,
+          cursor: saving ? 'not-allowed' : 'pointer',
+          boxShadow: saving ? 'none' : '0 14px 30px -10px rgba(61,40,64,0.5)',
+        }}>
+          {saving ? L('saving') : L('saveChanges')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function ProfileScreen({ state, setState, openScreen, tweak, setTweak, onLogout }) {
-  const { primaryBtn, ghostBtn, iconBtn } = window.uiBtns;
+  const { iconBtn } = window.uiBtns;
   const lang = tweak.lang;
   const L = (key, type) => window.tStr(key, lang, type);
 
-  // load persisted user data; fall back to tweak values for prototype compatibility
   const storedUser = React.useMemo(() => {
     try { return JSON.parse(localStorage.getItem('maya_user') || 'null'); } catch { return null; }
   }, []);
 
-  const displayName = storedUser ? storedUser.name : (tweak.mothersName || 'Maya');
-  const displayWeek = storedUser ? storedUser.pregnancyWeek : state.week;
-  const displayLang = storedUser ? storedUser.lang : tweak.lang;
-  const displayAge  = storedUser && storedUser.age      ? storedUser.age      : '—';
-  const displayCity = storedUser && storedUser.city     ? storedUser.city     : '—';
-  const displayBlood= storedUser && storedUser.bloodGroup ? storedUser.bloodGroup : '—';
-  const displayFirst= storedUser && storedUser.isFirstPregnancy !== null
-    ? (storedUser.isFirstPregnancy ? 'Yes' : 'No') : '—';
+  const [profile, setProfile] = React.useState({
+    name:             storedUser?.name             ?? tweak.mothersName ?? 'Maya',
+    pregnancyWeek:    storedUser?.pregnancyWeek    ?? state.week,
+    lang:             storedUser?.lang             ?? tweak.lang,
+    age:              storedUser?.age              ?? null,
+    city:             storedUser?.city             ?? null,
+    bloodGroup:       storedUser?.bloodGroup       ?? null,
+    isFirstPregnancy: storedUser?.isFirstPregnancy ?? null,
+    guardianName:     storedUser?.guardianName     ?? null,
+    guardianPhone:    storedUser?.guardianPhone    ?? null,
+    lastWeight:       storedUser?.lastWeight       ?? null,
+    lastBpReading:    storedUser?.lastBpReading    ?? null,
+  });
+
+  const [showEdit, setShowEdit]   = React.useState(false);
+  const [saving, setSaving]       = React.useState(false);
+  const [saveError, setSaveError] = React.useState('');
+
+  const { trimesterKey, fetalEmoji, fetalName } = getWeekInfo(profile.pregnancyWeek);
 
   const dueDate = (() => {
-    const today = new Date();
-    const daysRemaining = (40 - displayWeek) * 7;
-    const d = new Date(today.getTime() + daysRemaining * 86400000);
+    const daysRemaining = (40 - (profile.pregnancyWeek || state.week)) * 7;
+    const d = new Date(Date.now() + daysRemaining * 86400000);
     return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   })();
+
+  React.useEffect(() => {
+    const sessionRaw = localStorage.getItem('maya_session');
+    const userRaw    = localStorage.getItem('maya_user');
+    if (!sessionRaw || !userRaw) return;
+    let session, user;
+    try { session = JSON.parse(sessionRaw); user = JSON.parse(userRaw); } catch { return; }
+    if (!session.token || !user.id) return;
+
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(), 5000);
+    fetch(`${window.BACKEND_URL}/profile/${user.id}`, {
+      headers: { Authorization: `Bearer ${session.token}` },
+      signal: controller.signal,
+    })
+      .then(r => r.ok ? r.json().catch(() => null) : null)
+      .then(data => {
+        clearTimeout(tid);
+        if (!data) return;
+        setProfile(p => ({ ...p, ...data }));
+        if (window.saveUser) window.saveUser({ ...user, ...data });
+      })
+      .catch(() => clearTimeout(tid));
+    return () => { controller.abort(); clearTimeout(tid); };
+  }, []);
+
+  const handleSave = async (draft) => {
+    setSaving(true);
+    setSaveError('');
+
+    const sessionRaw = localStorage.getItem('maya_session');
+    const userRaw    = localStorage.getItem('maya_user');
+
+    const applyLocally = (d) => {
+      try {
+        const base = userRaw ? JSON.parse(userRaw) : {};
+        if (window.saveUser) window.saveUser({ ...base, ...d });
+      } catch {}
+      setProfile(d);
+      setState(s => ({ ...s, name: d.name, week: d.pregnancyWeek, lang: d.lang }));
+      setTweak('mothersName', d.name);
+      setTweak('week', d.pregnancyWeek);
+      setTweak('lang', d.lang);
+      setSaving(false);
+      setShowEdit(false);
+    };
+
+    let session, user;
+    try {
+      if (sessionRaw && userRaw) {
+        session = JSON.parse(sessionRaw);
+        user    = JSON.parse(userRaw);
+      }
+    } catch {}
+
+    if (!session?.token || !user?.id) { applyLocally(draft); return; }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    try {
+      const res = await fetch(`${window.BACKEND_URL}/profile/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+        body: JSON.stringify({
+          name:               draft.name,
+          pregnancy_week:     draft.pregnancyWeek,
+          lang:               draft.lang,
+          age:                draft.age,
+          city:               draft.city,
+          blood_group:        draft.bloodGroup,
+          is_first_pregnancy: draft.isFirstPregnancy,
+          guardian_name:      draft.guardianName,
+          guardian_phone:     draft.guardianPhone,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) {
+        let detail = 'Save failed';
+        try { detail = (await res.json()).detail || detail; } catch {}
+        throw new Error(detail);
+      }
+      const data = await res.json();
+      const merged = { ...draft, ...data };
+      if (window.saveUser) window.saveUser({ ...user, ...merged });
+      setProfile(p => ({ ...p, ...merged }));
+      setState(s => ({ ...s, name: data.name, week: data.pregnancyWeek, lang: data.lang }));
+      setTweak('mothersName', data.name);
+      setTweak('week',        data.pregnancyWeek);
+      setTweak('lang',        data.lang);
+      setSaving(false);
+      setShowEdit(false);
+    } catch (e) {
+      clearTimeout(timeoutId);
+      if (e.name === 'AbortError') {
+        // Timeout: fall back to localStorage-only save so the user isn't stuck
+        applyLocally(draft);
+      } else {
+        setSaving(false);
+        setSaveError(e.message || 'Could not save. Please try again.');
+      }
+    }
+  };
+
+  const langLabel = profile.lang === 'bn' ? 'বাংলা' : profile.lang === 'en' ? 'English' : 'Mixed';
+  const firstPregLabel = profile.isFirstPregnancy === null || profile.isFirstPregnancy === undefined
+    ? '—'
+    : profile.isFirstPregnancy ? L('firstPregYes') : L('firstPregNo');
 
   return (
     <div className="screen profile">
@@ -198,17 +454,17 @@ function ProfileScreen({ state, setState, openScreen, tweak, setTweak, onLogout 
             fontFamily: 'var(--display)', fontSize: 46, letterSpacing: '-0.02em',
             boxShadow: '0 20px 40px -20px rgba(61,40,64,0.4)',
           }}>
-            {displayName.slice(0,1).toUpperCase()}
+            {(profile.name || tweak.mothersName || 'M').slice(0,1).toUpperCase()}
           </div>
           <div style={{ fontFamily: 'var(--display)', fontSize: 26, color: '#3D2840', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
-            {displayName}
+            {profile.name}
           </div>
           <div style={{ fontSize: 12, color: '#5A3E5F', marginTop: 4 }}>
-            {L('motherToBe')} · Week {displayWeek}
+            {L('motherToBe')} · Week {profile.pregnancyWeek}
           </div>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginTop: 12 }}>
-            <Pill tone="cream">🥭 Mango size</Pill>
-            <Pill tone="cream">2nd trimester</Pill>
+            <Pill tone="cream">{fetalEmoji} {fetalName}</Pill>
+            <Pill tone="cream">{L(trimesterKey)}</Pill>
           </div>
         </Card>
       </div>
@@ -224,32 +480,40 @@ function ProfileScreen({ state, setState, openScreen, tweak, setTweak, onLogout 
             }}>
               <div>
                 <div style={{ fontSize: 9, opacity: 0.7, letterSpacing: '0.1em' }}>DUE</div>
-                <div style={{ fontFamily: 'var(--display)', fontSize: 20, marginTop: 3 }}>{40 - state.week}w</div>
+                <div style={{ fontFamily: 'var(--display)', fontSize: 20, marginTop: 3 }}>{40 - (profile.pregnancyWeek || state.week)}w</div>
               </div>
             </div>
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Estimated due date</div>
               <div style={{ fontFamily: 'var(--display)', fontSize: 19, color: '#3D2840', marginTop: 2, letterSpacing: '-0.01em' }}>{dueDate}</div>
-              <div style={{ fontSize: 11, color: '#5A3E5F', marginTop: 2 }}>Week {displayWeek} of 40</div>
+              <div style={{ fontSize: 11, color: '#5A3E5F', marginTop: 2 }}>Week {profile.pregnancyWeek} of 40</div>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* setup fields */}
+      {/* personal details */}
       <div style={{ padding: '16px 22px 0' }}>
-        <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', marginBottom: 8, letterSpacing: '-0.01em' }}>
-          Personal details
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', letterSpacing: '-0.01em' }}>
+            Personal details
+          </div>
+          <button onClick={() => setShowEdit(true)} style={{
+            padding: '6px 12px', borderRadius: 99, border: '1px solid rgba(61,40,64,0.15)',
+            background: 'transparent', color: '#5A3E5F', cursor: 'pointer', fontSize: 11, fontWeight: 600,
+          }}>
+            {L('editProfile')}
+          </button>
         </div>
         <Card style={{ padding: 0 }}>
           {[
-            { label: L('fieldName'),      value: displayName,  icon: '👤' },
-            { label: L('fieldWeek'),      value: `Week ${displayWeek}`, icon: '🌱' },
-            { label: L('fieldAge'),       value: displayAge,   icon: '🎂' },
-            { label: L('fieldCity'),      value: displayCity,  icon: '📍' },
-            { label: L('fieldBlood'),     value: displayBlood, icon: '🩸' },
-            { label: L('fieldFirstPreg'), value: displayFirst, icon: '✨' },
-            { label: L('fieldLang'),      value: displayLang === 'bn' ? 'বাংলা' : displayLang === 'en' ? 'English' : 'Mixed', icon: '🌐' },
+            { label: L('fieldName'),      value: profile.name || '—',        icon: '👤' },
+            { label: L('fieldWeek'),      value: `Week ${profile.pregnancyWeek}`, icon: '🌱' },
+            { label: L('fieldAge'),       value: profile.age       ? `${profile.age}` : '—', icon: '🎂' },
+            { label: L('fieldCity'),      value: profile.city      || '—',   icon: '📍' },
+            { label: L('fieldBlood'),     value: profile.bloodGroup || '—',  icon: '🩸' },
+            { label: L('fieldFirstPreg'), value: firstPregLabel,             icon: '✨' },
+            { label: L('fieldLang'),      value: langLabel,                  icon: '🌐' },
           ].map((f, i, arr) => (
             <div key={f.label} style={{
               display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px',
@@ -268,60 +532,64 @@ function ProfileScreen({ state, setState, openScreen, tweak, setTweak, onLogout 
         </Card>
       </div>
 
-      {/* health snapshot */}
-      <div style={{ padding: '16px 22px 0' }}>
-        <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', marginBottom: 8, letterSpacing: '-0.01em' }}>
-          Health snapshot
+      {/* health snapshot — only shown when real data exists */}
+      {(profile.lastWeight || profile.lastBpReading) && (
+        <div style={{ padding: '16px 22px 0' }}>
+          <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', marginBottom: 8, letterSpacing: '-0.01em' }}>
+            {L('healthSnapshot')}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${profile.lastWeight && profile.lastBpReading ? 2 : 1}, 1fr)`, gap: 8 }}>
+            {profile.lastWeight && (
+              <Card style={{ background: '#FBE5D6', padding: 14 }}>
+                <div style={{ fontSize: 10, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Current weight</div>
+                <div style={{ fontFamily: 'var(--display)', fontSize: 20, color: '#3D2840', marginTop: 4, letterSpacing: '-0.02em', lineHeight: 1 }}>{profile.lastWeight}</div>
+                <div style={{ fontSize: 9, color: '#5A3E5F', marginTop: 2 }}>kg</div>
+              </Card>
+            )}
+            {profile.lastBpReading && (
+              <Card style={{ background: '#E6F1DC', padding: 14 }}>
+                <div style={{ fontSize: 10, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Blood pressure</div>
+                <div style={{ fontFamily: 'var(--display)', fontSize: 20, color: '#3D2840', marginTop: 4, letterSpacing: '-0.02em', lineHeight: 1 }}>{profile.lastBpReading}</div>
+                <div style={{ fontSize: 9, color: '#5A3E5F', marginTop: 2 }}>mmHg</div>
+              </Card>
+            )}
+          </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-          {[
-            { l: 'Pre-weight', v: '54', u: 'kg', c: '#F2EBDA' },
-            { l: 'Current', v: '58.4', u: 'kg', c: '#FBE5D6' },
-            { l: 'BMI', v: '22.3', u: 'healthy', c: '#E6F1DC' },
-          ].map(s => (
-            <Card key={s.l} style={{ background: s.c, padding: 14 }}>
-              <div style={{ fontSize: 10, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{s.l}</div>
-              <div style={{ fontFamily: 'var(--display)', fontSize: 20, color: '#3D2840', marginTop: 4, letterSpacing: '-0.02em', lineHeight: 1 }}>{s.v}</div>
-              <div style={{ fontSize: 9, color: '#5A3E5F', marginTop: 2 }}>{s.u}</div>
-            </Card>
-          ))}
-        </div>
-      </div>
+      )}
 
-      {/* care team */}
-      <div style={{ padding: '16px 22px 0' }}>
-        <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', marginBottom: 8, letterSpacing: '-0.01em' }}>
-          Your care circle
-        </div>
-        <Card style={{ padding: 0 }}>
-          {[
-            { name: 'Dr. Rashida Khan', role: 'OB-GYN · Primary', tone: '#F4D7E5', init: 'R' },
-            { name: 'Anika (sister)', role: 'Emergency contact', tone: '#E0D5F0', init: 'A' },
-            { name: 'Square Hospital', role: 'Dhanmondi · 5 km away', tone: '#FBE5D6', init: '🏥' },
-          ].map((c, i, arr) => (
-            <div key={c.name} style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px',
-              borderBottom: i < arr.length - 1 ? '1px solid rgba(61,40,64,0.05)' : 'none',
-            }}>
+      {/* care circle — only shown when guardian data exists */}
+      {(profile.guardianName || profile.guardianPhone) && (
+        <div style={{ padding: '16px 22px 0' }}>
+          <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', marginBottom: 8, letterSpacing: '-0.01em' }}>
+            {L('careCircle')}
+          </div>
+          <Card style={{ padding: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px' }}>
               <div style={{
-                width: 38, height: 38, borderRadius: '50%', background: c.tone,
-                display: 'grid', placeItems: 'center', fontWeight: 700, color: '#3D2840',
-                fontFamily: 'var(--display)', fontSize: 18,
-              }}>{c.init}</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, color: '#2A1A36', fontWeight: 600 }}>{c.name}</div>
-                <div style={{ fontSize: 11, color: '#7A5E78' }}>{c.role}</div>
-              </div>
-              <button style={{
-                width: 32, height: 32, borderRadius: 99, border: 'none', background: '#F4ECE0',
-                display: 'grid', placeItems: 'center', cursor: 'pointer',
+                width: 38, height: 38, borderRadius: '50%', background: '#E0D5F0',
+                display: 'grid', placeItems: 'center', fontWeight: 700,
+                color: '#3D2840', fontFamily: 'var(--display)', fontSize: 18,
               }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3D2840" strokeWidth="2" strokeLinecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-              </button>
+                {profile.guardianName ? profile.guardianName.slice(0,1).toUpperCase() : '?'}
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, color: '#2A1A36', fontWeight: 600 }}>{profile.guardianName || 'Guardian'}</div>
+                <div style={{ fontSize: 11, color: '#7A5E78' }}>Emergency contact</div>
+              </div>
+              {profile.guardianPhone && (
+                <a href={`tel:${profile.guardianPhone}`} style={{
+                  width: 32, height: 32, borderRadius: 99, border: 'none', background: '#F4ECE0',
+                  display: 'grid', placeItems: 'center', cursor: 'pointer', textDecoration: 'none',
+                }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3D2840" strokeWidth="2" strokeLinecap="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                </a>
+              )}
             </div>
-          ))}
-        </Card>
-      </div>
+          </Card>
+        </div>
+      )}
 
       <div style={{ padding: '14px 22px 20px' }}>
         <button onClick={onLogout} style={{
@@ -330,6 +598,18 @@ function ProfileScreen({ state, setState, openScreen, tweak, setTweak, onLogout 
           fontSize: 13, fontWeight: 600,
         }}>Sign out</button>
       </div>
+
+      {showEdit && (
+        <ProfileEditModal
+          profile={profile}
+          lang={lang}
+          L={L}
+          saving={saving}
+          saveError={saveError}
+          onSave={handleSave}
+          onCancel={() => { setShowEdit(false); setSaveError(''); }}
+        />
+      )}
     </div>
   );
 }
@@ -589,6 +869,28 @@ function RiskScreen({ state, setState, openScreen }) {
   ];
   const [sel, setSel] = React.useState({});
   const [submitted, setSubmitted] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [taraMsg, setTaraMsg] = React.useState(null);
+  const [apiError, setApiError] = React.useState(false);
+  const [vitals, setVitals] = React.useState({ bp: null, sleep: null });
+
+  React.useEffect(() => {
+    const patientId = (() => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}').id || null; } catch { return null; } })();
+    const token = (() => { try { return JSON.parse(localStorage.getItem('maya_session') || '{}').token || ''; } catch { return ''; } })();
+    if (!patientId || !token) return;
+    const authHeader = { 'Authorization': `Bearer ${token}` };
+    Promise.all([
+      fetch(`${window.BACKEND_URL}/profile/${patientId}`, { headers: authHeader })
+        .then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${window.BACKEND_URL}/health-logs/${patientId}?data_type=sleep&limit=1`, { headers: authHeader })
+        .then(r => r.ok ? r.json() : []).catch(() => []),
+    ]).then(([profile, sleepLogs]) => {
+      setVitals({
+        bp: profile?.lastBpReading || null,
+        sleep: sleepLogs?.[0]?.value || null,
+      });
+    });
+  }, []);
 
   const score = Object.entries(sel).reduce((acc, [k, on]) => acc + (on ? SYMPTOMS.find(s => s.k === k).w : 0), 0);
   const level = score === 0 ? 'safe' : score <= 3 ? 'low' : score <= 7 ? 'moderate' : 'high';
@@ -601,7 +903,32 @@ function RiskScreen({ state, setState, openScreen }) {
   const lvl = levelMap[level];
 
   const toggle = (k) => setSel(s => ({ ...s, [k]: !s[k] }));
-  const reset = () => { setSel({}); setSubmitted(false); };
+  const reset = () => { setSel({}); setSubmitted(false); setTaraMsg(null); setApiError(false); };
+
+  const analyse = async () => {
+    const selectedSymNames = Object.entries(sel).filter(([, on]) => on).map(([k]) => L(SYMPTOMS.find(s => s.k === k).lKey));
+    const msgText = `আমার আজ এই লক্ষণগুলো আছে: ${selectedSymNames.join(', ')}। রিস্ক স্কোর: ${score}`;
+    const patientId = (() => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}').id || 'guest'; } catch { return 'guest'; } })();
+    const token = (() => { try { return JSON.parse(localStorage.getItem('maya_session') || '{}').token || ''; } catch { return ''; } })();
+    setLoading(true);
+    setApiError(false);
+    try {
+      const res = await fetch(`${window.BACKEND_URL}/ask`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ patient_id: patientId, message: msgText, source: 'risk_screen' }),
+      });
+      const data = await res.json();
+      setTaraMsg(data.message || data.voice_text || lvl.msg);
+      setSubmitted(true);
+    } catch (_) {
+      setApiError(true);
+      setTaraMsg(lvl.msg);
+      setSubmitted(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="screen risk">
@@ -693,11 +1020,23 @@ function RiskScreen({ state, setState, openScreen }) {
           {L('todaysReadings')}
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
-          {[
-            { l: 'BP', v: '118/76', s: 'normal', c: '#7BC894' },
-            { l: 'Sleep', v: '6.8h', s: 'okay', c: '#E5A064' },
-            { l: 'Hydration', v: '5/8', s: 'low', c: '#E5773A' },
-          ].map(s => (
+          {(() => {
+            const bpSys = vitals.bp ? parseInt(vitals.bp.split('/')[0]) : null;
+            const bpCard = {
+              l: 'BP',
+              v: vitals.bp || '—',
+              s: bpSys === null ? 'N/A' : bpSys >= 140 ? 'high' : bpSys >= 120 ? 'caution' : 'normal',
+              c: bpSys === null ? '#ADA3B0' : bpSys >= 140 ? '#D14040' : bpSys >= 120 ? '#E5773A' : '#7BC894',
+            };
+            const slpVal = vitals.sleep ? parseFloat(vitals.sleep) : null;
+            const slpCard = {
+              l: 'Sleep',
+              v: slpVal !== null ? slpVal + 'h' : '—',
+              s: slpVal === null ? 'N/A' : slpVal >= 7 ? 'good' : slpVal >= 5 ? 'okay' : 'low',
+              c: slpVal === null ? '#ADA3B0' : slpVal >= 7 ? '#7BC894' : slpVal >= 5 ? '#E5A064' : '#D14040',
+            };
+            return [bpCard, slpCard, { l: 'Hydration', v: '—', s: 'N/A', c: '#ADA3B0' }];
+          })().map(s => (
             <Card key={s.l} style={{ padding: 12 }}>
               <div style={{ fontSize: 10, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{s.l}</div>
               <div style={{ fontFamily: 'var(--display)', fontSize: 16, color: '#3D2840', marginTop: 4, letterSpacing: '-0.01em', lineHeight: 1 }}>{s.v}</div>
@@ -717,18 +1056,31 @@ function RiskScreen({ state, setState, openScreen }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <MayaGlyph size={22}/>
               <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#F4B4C8' }}>
-                Tara's read of this
+                {lang === 'bn' ? 'তারার বিশ্লেষণ' : "Tara's read of this"}
               </div>
             </div>
+            {apiError && (
+              <div style={{ fontSize: 10, color: '#F4B4C8', marginBottom: 6, opacity: 0.8 }}>
+                {lang === 'bn' ? '(অফলাইন — স্থানীয় বিশ্লেষণ)' : '(offline — local analysis)'}
+              </div>
+            )}
             <div style={{ fontFamily: 'var(--display)', fontSize: 17, lineHeight: 1.4, letterSpacing: '-0.01em' }}>
-              "{level === 'high' ? "Some of what you're feeling could be early signs of pre-eclampsia. Please don't wait — let me help you call Dr. Rashida now." : level === 'moderate' ? "These symptoms together are worth checking. I'll prep a note for your doctor with what you've logged this week." : "I hear you. Let's keep an eye on this — drink some water, rest, and tell me if anything changes."}"
+              "{taraMsg}"
             </div>
             <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-              <button style={{ ...primaryBtn, background: '#F08A6E', flex: 1 }}>
+              <button onClick={() => openScreen('chat')} style={{ ...primaryBtn, background: '#F08A6E', flex: 1 }}>
                 {level === 'high' ? ('☎️ ' + L('callDoctor')) : ('💬 ' + (lang === 'bn' ? 'ডাক্তারকে বলুন' : 'Tell my doctor'))}
               </button>
-              <button style={{ ...primaryBtn, background: 'rgba(255,241,228,0.15)', color: '#FFF1E4', flex: 1 }}>
-                Talk to Tara
+              <button onClick={() => {
+                setState(s => ({ ...s, riskContext: {
+                  symptoms: Object.entries(sel).filter(([, on]) => on).map(([k]) => L(SYMPTOMS.find(sym => sym.k === k).lKey)),
+                  level,
+                  score,
+                  taraAnalysis: taraMsg,
+                }}));
+                openScreen('chat');
+              }} style={{ ...primaryBtn, background: 'rgba(255,241,228,0.15)', color: '#FFF1E4', flex: 1 }}>
+                {lang === 'bn' ? 'তারার সাথে কথা বলুন' : 'Talk to Tara'}
               </button>
             </div>
           </Card>
@@ -737,15 +1089,18 @@ function RiskScreen({ state, setState, openScreen }) {
 
       {/* analyse button */}
       <div style={{ padding: '16px 22px 24px' }}>
-        <button onClick={() => setSubmitted(true)} disabled={Object.values(sel).every(v => !v)} style={{
+        <button onClick={analyse} disabled={Object.values(sel).every(v => !v) || loading} style={{
           width: '100%', padding: '16px', borderRadius: 18, border: 'none',
-          background: Object.values(sel).every(v => !v) ? 'rgba(61,40,64,0.2)' : 'linear-gradient(135deg, #3D2840, #5A3E5F)',
-          color: '#FFF1E4', cursor: Object.values(sel).every(v => !v) ? 'not-allowed' : 'pointer',
+          background: (Object.values(sel).every(v => !v) || loading) ? 'rgba(61,40,64,0.2)' : 'linear-gradient(135deg, #3D2840, #5A3E5F)',
+          color: '#FFF1E4', cursor: (Object.values(sel).every(v => !v) || loading) ? 'not-allowed' : 'pointer',
           fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em',
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           boxShadow: '0 14px 30px -10px rgba(61,40,64,0.5)',
         }}>
-          <span>✨</span> {L('analyseButton')}
+          {loading
+            ? <span style={{ opacity: 0.7 }}>{lang === 'bn' ? '⏳ বিশ্লেষণ হচ্ছে…' : '⏳ Analysing…'}</span>
+            : <React.Fragment><span>✨</span> {L('analyseButton')}</React.Fragment>
+          }
         </button>
         <div style={{ fontSize: 10, color: '#7A5E78', textAlign: 'center', marginTop: 8, lineHeight: 1.5 }}>
           {L('notMedical')}

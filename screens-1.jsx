@@ -322,6 +322,17 @@ function ChatScreen({ state, setState, openScreen }) {
     }
   };
 
+  React.useEffect(() => {
+    if (!state.riskContext) return;
+    const { symptoms, level, score } = state.riskContext;
+    setState(s => { const { riskContext, ...rest } = s; return rest; });
+    const symList = symptoms.join(', ');
+    const autoMsg = lang === 'bn'
+      ? `আমার আজ এই লক্ষণগুলো আছে: ${symList}। রিস্ক লেভেল: ${level} (স্কোর ${score})। তুমি কি এটা নিয়ে আমার সাথে বিস্তারিত কথা বলবে?`
+      : `I just completed a risk check. Symptoms: ${symList}. Risk level: ${level} (score ${score}). Can you talk to me about this in detail?`;
+    send(autoMsg);
+  }, []); // fire once on mount — riskContext is in state at mount time if navigated from RiskScreen
+
   return (
     <div className="screen chat" style={{ position: 'relative', display: 'flex', flexDirection: 'column', height: '100%' }}>
       {showHistory && (
