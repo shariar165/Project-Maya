@@ -344,6 +344,10 @@ function ProfileScreen({ state, setState, openScreen, tweak, setTweak, onLogout 
         if (!data) return;
         setProfile(p => ({ ...p, ...data }));
         if (window.saveUser) window.saveUser({ ...user, ...data });
+        setState(s => ({ ...s, name: data.name ?? s.name, week: data.pregnancyWeek ?? s.week, lang: data.lang ?? s.lang }));
+        if (data.name)          setTweak('mothersName', data.name);
+        if (data.pregnancyWeek) setTweak('week', data.pregnancyWeek);
+        if (data.lang)          setTweak('lang', data.lang);
       })
       .catch(() => clearTimeout(tid));
     return () => { controller.abort(); clearTimeout(tid); };

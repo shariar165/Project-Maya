@@ -88,7 +88,7 @@ function WeekRing({ week, total = 40, size = 76 }) {
       stroke="#3D2840" strokeWidth="6" strokeLinecap="round"
       strokeDasharray={c} strokeDashoffset={c * (1 - pct)}
       transform={`rotate(-90 ${size / 2} ${size / 2})`} />
-      
+
     </svg>);
 
 }
@@ -117,22 +117,89 @@ function HomeScreen({ state, setState, openScreen }) {
   const { week, name, lang, mood } = state;
   const L = (key, type) => window.tStr(key, lang, type);
   const taraRef = React.useRef(null);
-  const fruit = WEEK_FRUITS[Math.min(40, Math.max(1, week))];
-  const trimester = L(week <= 13 ? 'trimester1' : week <= 27 ? 'trimester2' : 'trimester3');
-  const monthFromWeek = Math.min(9, Math.ceil(week / 4.345));
   const [proactiveMsg, setProactiveMsg] = React.useState(null);
+  const [profileData, setProfileData] = React.useState(null);
+  const [appointment, setAppointment] = React.useState(null); // null=loading, false=none, object=real
+
+  // Use fresh backend profile when available; fall back to localStorage user,
+  // then to app state (which itself falls back to tweakDefaults as last resort).
+  const _lsUser = (() => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}'); } catch { return {}; } })();
+  const displayWeek = profileData?.pregnancyWeek ?? _lsUser.pregnancyWeek ?? week;
+  const displayName = profileData?.name           ?? _lsUser.name          ?? name;
+  const fruit = WEEK_FRUITS[Math.min(40, Math.max(1, displayWeek))];
+  const trimester = L(displayWeek <= 13 ? 'trimester1' : displayWeek <= 27 ? 'trimester2' : 'trimester3');
+  const monthFromWeek = Math.min(9, Math.ceil(displayWeek / 4.345));
+  const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   const checks = state.checks;
   const toggleCheck = (k) => setState((s) => ({ ...s, checks: { ...s.checks, [k]: !s.checks[k] } }));
 
-  // Fetch proactive message from monitoring agent on home screen load
+  // Persist daily check state so it survives a refresh and auto-resets on a new day
   React.useEffect(() => {
-    const patientId = (() => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}').id; } catch { return null; } })();
-    if (!patientId || !window.BACKEND_URL) return;
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      localStorage.setItem(`maya_checks_${today}`, JSON.stringify(checks));
+    } catch {}
+  }, [checks]);
+
+  const fmtApptType = (type) => {
+    if (!type) return L('nextCheckup');
+    const map = { anc: 'ANC Checkup', ultrasound: 'Ultrasound', followup: 'Follow-up', general: 'Checkup' };
+    const key = type.toLowerCase();
+    return map[key] || (type.charAt(0).toUpperCase() + type.slice(1));
+  };
+
+  const fmtApptDate = (isoStr) => {
+    if (!isoStr) return '';
+    try {
+      const d = new Date(isoStr);
+      return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) +
+        ' · ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+    } catch { return ''; }
+  };
+
+  React.useEffect(() => {
+    const user = (() => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}'); } catch { return {}; } })();
+    const session = (() => { try { return JSON.parse(localStorage.getItem('maya_session') || '{}'); } catch { return {}; } })();
+    const patientId = user.id;
+
+    if (!patientId || !window.BACKEND_URL) {
+      setAppointment(false);
+      return;
+    }
+
+    const authHeader = session.token ? { Authorization: `Bearer ${session.token}` } : {};
+
+    // Proactive message from monitoring agent
     fetch(`${window.BACKEND_URL}/proactive/${patientId}`)
       .then(r => r.json())
       .then(data => { if (data.has_message) setProactiveMsg(data); })
       .catch(() => {});
+
+    // Fresh profile — resolves profile/home data conflict
+    fetch(`${window.BACKEND_URL}/profile/${patientId}`, { headers: authHeader })
+      .then(r => { if (!r.ok) throw new Error('profile'); return r.json(); })
+      .then(data => {
+        setProfileData(data);
+        setState(s => ({
+          ...s,
+          name: data.name ?? s.name,
+          week: data.pregnancyWeek ?? s.week,
+          lang: data.lang ?? s.lang,
+        }));
+      })
+      .catch(() => {}); // silently fall back to state values
+
+    // Next upcoming appointment
+    fetch(`${window.BACKEND_URL}/appointments/${patientId}`)
+      .then(r => { if (!r.ok) throw new Error('appointments'); return r.json(); })
+      .then(appts => {
+        const now = new Date();
+        const next = (Array.isArray(appts) ? appts : [])
+          .find(a => !a.attended && a.scheduled_at && new Date(a.scheduled_at) > now);
+        setAppointment(next || false);
+      })
+      .catch(() => setAppointment(false));
   }, []);
 
   function handleVoiceOpen() {
@@ -148,11 +215,11 @@ function HomeScreen({ state, setState, openScreen }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
           <div style={{ minWidth: 0, flex: 1 }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: '#7A5E78', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-              Tuesday · 14 May · Week {week}
+              {todayLabel} · Week {displayWeek}
             </div>
             <div style={{ fontFamily: 'var(--display)', fontSize: 26, lineHeight: 1.1, color: '#2A1A36', marginTop: 4, letterSpacing: '-0.02em' }}>
               <span style={{ display: 'block' }}>{L('greeting', 'tara')},</span>
-              <span style={{ fontStyle: 'italic' }}>{name}</span>
+              <span style={{ fontStyle: 'italic' }}>{displayName}</span>
             </div>
           </div>
         </div>
@@ -176,7 +243,7 @@ function HomeScreen({ state, setState, openScreen }) {
             <Pill tone="cream">
               <span style={{ width: 6, height: 6, borderRadius: 99, background: '#7BC894' }} /> {L('taraIsHere', 'tara')}
             </Pill>
-            <Pill tone="cream">Week {week} · {trimester}</Pill>
+            <Pill tone="cream">Week {displayWeek} · {trimester}</Pill>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 10, gap: 8 }}>
@@ -214,10 +281,10 @@ function HomeScreen({ state, setState, openScreen }) {
         <Card style={{ padding: 0, background: '#FFF8EF' }}>
           <div style={{ display: 'flex', alignItems: 'center', padding: '16px 18px', gap: 14 }}>
             <div style={{ position: 'relative' }}>
-              <WeekRing week={week} />
+              <WeekRing week={displayWeek} />
               <div style={{ position: 'absolute', inset: 0, display: 'grid', placeItems: 'center' }}>
                 <div style={{ textAlign: 'center', lineHeight: 1 }}>
-                  <div style={{ fontFamily: 'var(--display)', fontSize: 22, color: '#3D2840' }}>{week}</div>
+                  <div style={{ fontFamily: 'var(--display)', fontSize: 22, color: '#3D2840' }}>{displayWeek}</div>
                   <div style={{ fontSize: 9, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.08em' }}>{L('week').toUpperCase()}</div>
                 </div>
               </div>
@@ -238,7 +305,7 @@ function HomeScreen({ state, setState, openScreen }) {
           <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, rgba(61,40,64,0.1), transparent)' }} />
           <div style={{ display: 'flex', padding: '12px 18px', justifyContent: 'space-between', alignItems: 'center' }}>
             <div style={{ fontSize: 12, color: '#5A3E5F' }}>
-              {L('monthOf9').replace('{n}', monthFromWeek)} · <span style={{ color: '#3D2840', fontWeight: 600 }}>{L('weeksToGo').replace('{n}', 40 - week)}</span>
+              {L('monthOf9').replace('{n}', monthFromWeek)} · <span style={{ color: '#3D2840', fontWeight: 600 }}>{L('weeksToGo').replace('{n}', 40 - displayWeek)}</span>
             </div>
             <button onClick={() => openScreen('journey')} style={ghostBtn}>{L('thisMonth')}</button>
           </div>
@@ -310,18 +377,18 @@ function HomeScreen({ state, setState, openScreen }) {
           <Card style={{ background: '#F2EBDA' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <Pill tone="cream">{L('eat')}</Pill>
-              <span style={{ fontSize: 22 }}>🥭</span>
+              <span style={{ fontSize: 22 }}>{fruit.emoji}</span>
             </div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#3D2840', lineHeight: 1.3 }}>Mango, lentils, and 1 boiled egg</div>
-            <div style={{ fontSize: 11, color: '#7A5E78', marginTop: 4, lineHeight: 1.5 }}>Iron + folate for baby's brain growth.</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#3D2840', lineHeight: 1.3 }}>{L('eatContent')}</div>
+            <div style={{ fontSize: 11, color: '#7A5E78', marginTop: 4, lineHeight: 1.5 }}>{L('eatSub')}</div>
           </Card>
           <Card style={{ background: '#F8E2DD' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <Pill tone="pink">{L('avoid')}</Pill>
               <span style={{ fontSize: 22 }}>🚫</span>
             </div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#3D2840', lineHeight: 1.3 }}>Raw papaya, strong tea</div>
-            <div style={{ fontSize: 11, color: '#7A5E78', marginTop: 4, lineHeight: 1.5 }}>And heavy lifting after lunch.</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: '#3D2840', lineHeight: 1.3 }}>{L('avoidContent')}</div>
+            <div style={{ fontSize: 11, color: '#7A5E78', marginTop: 4, lineHeight: 1.5 }}>{L('avoidSub')}</div>
           </Card>
         </div>
       </div>
@@ -375,23 +442,48 @@ function HomeScreen({ state, setState, openScreen }) {
         </Card>
       </div>
 
-      {/* upcoming reminder */}
+      {/* upcoming appointment */}
       <div style={{ padding: '14px 22px 20px' }}>
         <Card>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                {L('nextCheckup')}
-              </div>
-              <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', marginTop: 2, letterSpacing: '-0.01em' }}>
-                Dr. Rashida Khan · Friday
-              </div>
-              <div style={{ fontSize: 12, color: '#5A3E5F', marginTop: 2 }}>
-                10:30 AM · Square Hospital, Dhanmondi
+          {appointment === null ? (
+            // Loading skeleton
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ flex: 1 }}>
+                <div style={{ height: 10, width: 80, borderRadius: 6, background: 'rgba(61,40,64,0.08)', marginBottom: 8 }} />
+                <div style={{ height: 18, width: 180, borderRadius: 8, background: 'rgba(61,40,64,0.06)' }} />
               </div>
             </div>
-            <button onClick={() => openScreen('care')} style={ghostBtn}>{L('details')}</button>
-          </div>
+          ) : appointment === false ? (
+            // No upcoming appointments
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  {L('nextCheckup')}
+                </div>
+                <div style={{ fontFamily: 'var(--display)', fontSize: 16, color: '#9A8595', marginTop: 2, fontStyle: 'italic' }}>
+                  {L('noCheckup')}
+                </div>
+              </div>
+              <button onClick={() => openScreen('care')} style={ghostBtn}>{L('bookCheckup')}</button>
+            </div>
+          ) : (
+            // Real appointment data
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                  {L('nextCheckup')}
+                </div>
+                <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', marginTop: 2, letterSpacing: '-0.01em' }}>
+                  {fmtApptType(appointment.appointment_type)} · {fmtApptDate(appointment.scheduled_at).split(' · ')[0]}
+                </div>
+                <div style={{ fontSize: 12, color: '#5A3E5F', marginTop: 2 }}>
+                  {fmtApptDate(appointment.scheduled_at).split(' · ')[1]}
+                  {appointment.location ? ` · ${appointment.location}` : ''}
+                </div>
+              </div>
+              <button onClick={() => openScreen('care')} style={ghostBtn}>{L('details')}</button>
+            </div>
+          )}
         </Card>
       </div>
     </div>);
