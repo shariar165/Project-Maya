@@ -171,6 +171,14 @@ function App() {
   const [pendingPhone, setPendingPhone] = React.useState('');
   const [pendingId, setPendingId] = React.useState('');
 
+  // lifted screen state — survives navigation
+  const [chatMsgs, setChatMsgs] = React.useState(() => [
+    { who: 'tara', t: window.tStr('taraOpening', 'mixed', 'tara'), emo: 'caring' }
+  ]);
+  const [chatConvId, setChatConvId] = React.useState(null);
+  const [wellnessMood, setWellnessMood] = React.useState('tender');
+  const [wellnessLibCat, setWellnessLibCat] = React.useState('all');
+
   // tweakable
   const tweakDefaults = /*EDITMODE-BEGIN*/{
     "theme": "dawn",
@@ -181,9 +189,24 @@ function App() {
   }/*EDITMODE-END*/;
   const [t, setTweak] = window.useTweaks(tweakDefaults);
 
-  const [state, setState] = React.useState({
-    week: t.week, name: t.mothersName, lang: t.lang, mood: t.taraMood,
-    checks: { water: true, iron: false, walk: false, kicks: false },
+  // Initialize state from localStorage user data immediately so the first render
+  // shows the real week/name instead of the tweakDefaults (week: 20).
+  const [state, setState] = React.useState(() => {
+    const session = loadSession();
+    const user = session && !session.isGuest ? loadUser() : null;
+    return {
+      week:  user?.pregnancyWeek ?? t.week,
+      name:  user?.name          ?? t.mothersName,
+      lang:  user?.lang          ?? t.lang,
+      mood:  t.taraMood,
+      checks: (() => {
+        try {
+          const today = new Date().toISOString().slice(0, 10);
+          const saved = JSON.parse(localStorage.getItem(`maya_checks_${today}`) || 'null');
+          return saved || { water: false, iron: false, walk: false, kicks: false };
+        } catch { return { water: false, iron: false, walk: false, kicks: false }; }
+      })(),
+    };
   });
 
   // On mount: check for existing session
@@ -218,6 +241,10 @@ function App() {
     setShowSplash(true);
     setShowIntro(true);
     setScreen('home');
+    setChatMsgs([{ who: 'tara', t: window.tStr('taraOpening', t.lang, 'tara'), emo: 'caring' }]);
+    setChatConvId(null);
+    setWellnessMood('tender');
+    setWellnessLibCat('all');
   };
 
   const openScreen = (s) => setScreen(s);
@@ -292,7 +319,11 @@ function App() {
         WebkitOverflowScrolling: 'touch',
       }} data-screen-label={`Maya · ${screen}`}>
         {showHeader && <window.AppHeader t={t} onSettings={() => setScreen('settings')} onProfile={() => setScreen('profile')}/>}
-        <Screen state={state} setState={setState} openScreen={openScreen} tweak={t} setTweak={setTweak} onLogout={handleLogout}/>
+        <Screen state={state} setState={setState} openScreen={openScreen} tweak={t} setTweak={setTweak} onLogout={handleLogout}
+          {...({
+            chat:     { chatMsgs, setChatMsgs, chatConvId, setChatConvId },
+            wellness: { wellnessMood, setWellnessMood, wellnessLibCat, setWellnessLibCat },
+          }[screen] || {})}/>
       </div>
 
       {!isVoice && !isSubPage && <BottomNav screen={screen} setScreen={setScreen} lang={t.lang}/>}

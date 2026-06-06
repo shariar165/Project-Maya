@@ -272,17 +272,18 @@ const _delConvo = (id) => {
   localStorage.setItem('maya_conversations', JSON.stringify(_getConvos().filter(c => c.id !== id)));
 };
 
-function ChatScreen({ state, setState, openScreen }) {
+function ChatScreen({ state, setState, openScreen, chatMsgs, setChatMsgs, chatConvId, setChatConvId }) {
   const { iconBtn, primaryBtn } = window.uiBtns;
   const lang = state.lang;
   const L = (key, type) => window.tStr(key, lang, type);
-  const [msgs, setMsgs] = React.useState(() => [
-    { who: 'tara', t: window.tStr('taraOpening', lang, 'tara'), emo: 'caring' }
-  ]);
+  // msgs and convId are lifted to App so they survive navigation
+  const msgs = chatMsgs;
+  const setMsgs = setChatMsgs;
+  const convId = chatConvId;
+  const setConvId = setChatConvId;
   const [input, setInput] = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const [showHistory, setShowHistory] = React.useState(false);
-  const [convId, setConvId] = React.useState(null);
   const scrollRef = React.useRef(null);
 
   React.useEffect(() => {
