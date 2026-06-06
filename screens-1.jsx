@@ -11,6 +11,8 @@ function JourneyScreen({ state, setState, openScreen }) {
     ? Math.min(9, Math.ceil(state.week / 4.345))
     : Math.min(12, 9 + Math.ceil((state.week - 40) / 4));
   const [active, setActive] = React.useState(monthFromWeek);
+  // Keep active month in sync when state.week arrives from backend
+  React.useEffect(() => { setActive(monthFromWeek); }, [state.week]);
 
   const months = [
   { n: 1, tKey: 'monthTitle1', accent: '#FCE0D4', tara: 'sleepy',
