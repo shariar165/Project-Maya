@@ -7,12 +7,13 @@ function JourneyScreen({ state, setState, openScreen }) {
   const { iconBtn, primaryBtn, ghostBtn } = window.uiBtns;
   const lang = state.lang;
   const L = (key, type) => window.tStr(key, lang, type);
-  const monthFromWeek = state.week <= 40
-    ? Math.min(9, Math.ceil(state.week / 4.345))
-    : Math.min(12, 9 + Math.ceil((state.week - 40) / 4));
+  const _lsUser = (() => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}'); } catch { return {}; } })();
+  const displayWeek = _lsUser.pregnancyWeek ?? state.week;
+  const monthFromWeek = displayWeek <= 40
+    ? Math.min(9, Math.ceil(displayWeek / 4.345))
+    : Math.min(12, 9 + Math.ceil((displayWeek - 40) / 4));
   const [active, setActive] = React.useState(monthFromWeek);
-  // Keep active month in sync when state.week arrives from backend
-  React.useEffect(() => { setActive(monthFromWeek); }, [state.week]);
+  React.useEffect(() => { setActive(monthFromWeek); }, [monthFromWeek]);
 
   const months = [
   { n: 1, tKey: 'monthTitle1', accent: '#FCE0D4', tara: 'sleepy',
