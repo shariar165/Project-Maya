@@ -226,6 +226,10 @@ function App() {
     setTweak('mothersName', user.name);
     setTweak('week', user.pregnancyWeek);
     setTweak('lang', user.lang);
+    try {
+      const p = JSON.parse(localStorage.getItem('maya_prefs') || 'null');
+      if (p?.theme) setTweak('theme', p.theme);
+    } catch {}
   }, []);
 
   React.useEffect(() => {

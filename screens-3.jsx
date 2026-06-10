@@ -625,16 +625,62 @@ function SettingsScreen({ state, setState, openScreen, tweak, setTweak, onLogout
   const { iconBtn } = window.uiBtns;
   const lang = tweak.lang;
   const L = (key, type) => window.tStr(key, lang, type);
-  const [notifications, setNotif] = React.useState({ daily: true, kicks: true, meds: true, mood: false });
-  const [voice, setVoice] = React.useState({ wake: true, tone: 'warm' });
+
+  const _loadPrefs = () => { try { return JSON.parse(localStorage.getItem('maya_prefs') || 'null'); } catch { return null; } };
+  const _initPrefs = _loadPrefs() || {};
+  const [notifications, setNotif] = React.useState(_initPrefs.notifications || { daily: true, kicks: true, meds: true, mood: false });
+  const [voice, setVoice] = React.useState(_initPrefs.voice || { wake: true, tone: 'warm' });
   const [confirmLogout, setConfirmLogout] = React.useState(false);
+  const _saveTimer = React.useRef(null);
 
   const storedUser = React.useMemo(() => {
     try { return JSON.parse(localStorage.getItem('maya_user') || 'null'); } catch { return null; }
   }, []);
   const phone = storedUser && storedUser.phone !== 'guest' ? storedUser.phone : null;
 
-  const setLang = (l) => setTweak('lang', l);
+  // Sync preferences from backend on mount (handles cross-device login)
+  React.useEffect(() => {
+    const session = (() => { try { return JSON.parse(localStorage.getItem('maya_session') || 'null'); } catch { return null; } })();
+    if (!session || session.isGuest || !session.patientId || !session.token) return;
+    fetch(`${window.BACKEND_URL}/profile/${session.patientId}`, {
+      headers: { Authorization: `Bearer ${session.token}` },
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then(profile => {
+        if (!profile) return;
+        if (profile.notifications) {
+          try { const n = JSON.parse(profile.notifications); setNotif(n); } catch {}
+        }
+        if (profile.voiceSettings) {
+          try { const v = JSON.parse(profile.voiceSettings); setVoice(v); } catch {}
+        }
+        if (profile.theme && profile.theme !== tweak.theme) setTweak('theme', profile.theme);
+        if (profile.lang  && profile.lang  !== tweak.lang)  setTweak('lang',  profile.lang);
+      })
+      .catch(() => {});
+  }, []);
+
+  const savePrefs = (patch) => {
+    const prefs = { ...(_loadPrefs() || {}), ...patch };
+    localStorage.setItem('maya_prefs', JSON.stringify(prefs));
+    const session = (() => { try { return JSON.parse(localStorage.getItem('maya_session') || 'null'); } catch { return null; } })();
+    if (!session || session.isGuest || !session.patientId || !session.token) return;
+    if (_saveTimer.current) clearTimeout(_saveTimer.current);
+    _saveTimer.current = setTimeout(() => {
+      const body = {};
+      if (patch.theme         != null) body.theme          = patch.theme;
+      if (patch.lang          != null) body.lang           = patch.lang;
+      if (patch.notifications != null) body.notifications  = JSON.stringify(patch.notifications);
+      if (patch.voice         != null) body.voice_settings = JSON.stringify(patch.voice);
+      fetch(`${window.BACKEND_URL}/profile/${session.patientId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.token}` },
+        body: JSON.stringify(body),
+      }).catch(() => {});
+    }, 600);
+  };
+
+  const setLang = (l) => { setTweak('lang', l); savePrefs({ lang: l }); };
 
   return (
     <div className="screen settings">
@@ -711,7 +757,7 @@ function SettingsScreen({ state, setState, openScreen, tweak, setTweak, onLogout
             { k: 'meds',  l: L('notifMeds'),    s: L('notifMedsSub') },
             { k: 'mood',  l: L('notifMood'),    s: L('notifMoodSub') },
           ].map((it, i, arr) => (
-            <ToggleRow key={it.k} title={it.l} sub={it.s} on={notifications[it.k]} onChange={v => setNotif(n => ({ ...n, [it.k]: v }))} last={i === arr.length - 1}/>
+            <ToggleRow key={it.k} title={it.l} sub={it.s} on={notifications[it.k]} onChange={v => { const n = { ...notifications, [it.k]: v }; setNotif(n); savePrefs({ notifications: n }); }} last={i === arr.length - 1}/>
           ))}
         </Card>
       </div>
@@ -722,14 +768,14 @@ function SettingsScreen({ state, setState, openScreen, tweak, setTweak, onLogout
           {L('sectionVoice')}
         </div>
         <Card style={{ padding: 0 }}>
-          <ToggleRow title={L('wakeOnHiTara')} sub={L('wakeOnHiTaraSub')} on={voice.wake} onChange={v => setVoice(s => ({ ...s, wake: v }))}/>
+          <ToggleRow title={L('wakeOnHiTara')} sub={L('wakeOnHiTaraSub')} on={voice.wake} onChange={v => { const s = { ...voice, wake: v }; setVoice(s); savePrefs({ voice: s }); }}/>
           <Row title="Tara's voice tone" value="Warm & soft">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9A8595" strokeWidth="2" strokeLinecap="round"><path d="M9 6l6 6-6 6"/></svg>
           </Row>
           <Row title="Theme" value={tweak.theme === 'dawn' ? 'Dawn' : tweak.theme === 'dusk' ? 'Dusk' : 'Night'}>
             <div style={{ display: 'flex', gap: 4 }}>
               {['dawn', 'dusk', 'night'].map(th => (
-                <button key={th} onClick={() => setTweak('theme', th)} style={{
+                <button key={th} onClick={() => { setTweak('theme', th); savePrefs({ theme: th }); }} style={{
                   width: 22, height: 22, borderRadius: 99, border: tweak.theme === th ? '2px solid #3D2840' : '2px solid transparent',
                   background: th === 'dawn' ? 'linear-gradient(135deg, #FBD7C6, #F4D7E5)' :
                               th === 'dusk' ? 'linear-gradient(135deg, #E0D5F0, #F4B4C8)' :

@@ -1,5 +1,5 @@
 from contextlib import contextmanager
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from config import DATABASE_URL
 from db.models import Base
@@ -17,13 +17,17 @@ def init_db():
     Base.metadata.create_all(bind=engine)
     # Add archived column to proactive_messages if it doesn't exist yet (SQLite migration)
     with engine.connect() as conn:
-        try:
-            conn.execute(
-                "ALTER TABLE proactive_messages ADD COLUMN archived BOOLEAN DEFAULT 0"
-            )
-            conn.commit()
-        except Exception:
-            pass  # Column already exists
+        for tbl, col, ddl in [
+            ("proactive_messages", "archived",       "BOOLEAN DEFAULT 0"),
+            ("patients",           "theme",           "VARCHAR DEFAULT 'dawn'"),
+            ("patients",           "notifications",   "TEXT"),
+            ("patients",           "voice_settings",  "TEXT"),
+        ]:
+            try:
+                conn.execute(text(f"ALTER TABLE {tbl} ADD COLUMN {col} {ddl}"))
+                conn.commit()
+            except Exception:
+                pass  # Column already exists
 
 
 @contextmanager

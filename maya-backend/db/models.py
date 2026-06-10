@@ -31,6 +31,9 @@ class Patient(Base):
     status              = Column(String, default="active")
     due_date            = Column(String, nullable=True)   # ISO date string
     lang                = Column(String, default="bn")    # bn | en | mixed
+    theme               = Column(String, default="dawn")   # dawn | dusk | night
+    notifications       = Column(Text, nullable=True)       # JSON: {daily,kicks,meds,mood}
+    voice_settings      = Column(Text, nullable=True)       # JSON: {wake,tone}
     city                = Column(String, nullable=True)
     blood_group         = Column(String, nullable=True)
     is_first_pregnancy  = Column(Boolean, default=True)

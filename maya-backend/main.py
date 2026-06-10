@@ -134,6 +134,9 @@ class UpdateProfileRequest(BaseModel):
     name:               Optional[str]  = None
     pregnancy_week:     Optional[int]  = None
     lang:               Optional[str]  = None
+    theme:              Optional[str]  = None
+    notifications:      Optional[str]  = None   # JSON string
+    voice_settings:     Optional[str]  = None   # JSON string
     age:                Optional[int]  = None
     city:               Optional[str]  = None
     blood_group:        Optional[str]  = None
@@ -314,6 +317,9 @@ async def get_profile(patient_id: str, authorization: Optional[str] = Header(Non
             "name":             patient.name,
             "pregnancyWeek":    patient.pregnancy_week,
             "lang":             patient.lang,
+            "theme":            patient.theme or "dawn",
+            "notifications":    patient.notifications,
+            "voiceSettings":    patient.voice_settings,
             "age":              patient.age,
             "city":             patient.city,
             "bloodGroup":       patient.blood_group,
@@ -352,6 +358,9 @@ async def update_profile(
             weeks_remaining = 40 - req.pregnancy_week
             patient.due_date = (date.today() + timedelta(weeks=weeks_remaining)).isoformat()
         if req.lang               is not None: patient.lang               = req.lang
+        if req.theme              is not None: patient.theme              = req.theme
+        if req.notifications      is not None: patient.notifications      = req.notifications
+        if req.voice_settings     is not None: patient.voice_settings     = req.voice_settings
         if req.age                is not None: patient.age                = req.age
         if req.city               is not None: patient.city               = req.city
         if req.blood_group        is not None: patient.blood_group        = req.blood_group
@@ -365,6 +374,9 @@ async def update_profile(
             "name":             patient.name,
             "pregnancyWeek":    patient.pregnancy_week,
             "lang":             patient.lang,
+            "theme":            patient.theme or "dawn",
+            "notifications":    patient.notifications,
+            "voiceSettings":    patient.voice_settings,
             "age":              patient.age,
             "city":             patient.city,
             "bloodGroup":       patient.blood_group,
