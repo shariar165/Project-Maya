@@ -50,11 +50,12 @@ def log_health_data(patient_id: str, data_type: str, value: str) -> str:
     return f"Logged {data_type}: {value}"
 
 
-def save_conversation(patient_id: str, role: str, content: str) -> str:
+def save_conversation(patient_id: str, role: str, content: str, session_id: str = None) -> str:
     """Save one conversation turn (user or tara)."""
     with get_db() as db:
         conv = Conversation(
             patient_id=patient_id,
+            session_id=session_id,
             role=role,
             content=content,
             created_at=datetime.utcnow(),
@@ -67,10 +68,10 @@ def get_conversation_history(patient_id: str, limit: int = 5) -> list[dict]:
     """Retrieve last N conversation turns."""
     with get_db() as db:
         rows = (
-            db.query(Conversation)
+            db.query(Conversation.role, Conversation.content)
             .filter(Conversation.patient_id == patient_id)
             .order_by(Conversation.created_at.desc())
             .limit(limit)
             .all()
         )
-    return [{"role": r.role, "content": r.content} for r in reversed(rows)]
+        return [{"role": role, "content": content} for role, content in reversed(rows)]

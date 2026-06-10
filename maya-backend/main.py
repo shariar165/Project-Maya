@@ -1,8 +1,5 @@
 import sys
 import logging
-import random
-import string
-import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
 
@@ -22,10 +19,15 @@ from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 from config import parse_llm_json
-from db.models import AuthSession, Appointment, HealthLog, Patient, ProactiveMessage, WellnessSession
-from db.session import get_db, init_db
+from db.models import Appointment, Conversation, HealthLog, Patient, ProactiveMessage, WellnessSession
+from db.session import get_db, init_db, close_redis
+from auth.router import router as auth_router
+from auth.token import verify_access_token
 from agents.orchestrator import get_graph, MayaState
 from agents.response_composer import compose_tara_response
 from tools.patient_tool import save_conversation
@@ -78,6 +80,7 @@ async def lifespan(app: FastAPI):
     yield
 
     scheduler.shutdown()
+    await close_redis()
     print("[Maya] APScheduler stopped.")
 
 
@@ -94,33 +97,20 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.include_router(auth_router)
+
 
 # ── Request/Response models ───────────────────────────────────────────────────
-
-class SendOTPRequest(BaseModel):
-    phone: str
-
-class VerifyOTPRequest(BaseModel):
-    phone: str
-    otp:   str
-
-class RegisterRequest(BaseModel):
-    phone:              str
-    name:               str
-    pregnancy_week:     int
-    lang:               str = "bn"
-    age:                Optional[int] = None
-    city:               Optional[str] = None
-    blood_group:        Optional[str] = None
-    is_first_pregnancy: Optional[bool] = True
-    guardian_name:      Optional[str] = None
-    guardian_phone:     Optional[str] = None
 
 class AskRequest(BaseModel):
     patient_id: str
     message:    str
     source:     str = "chat"
     context:    list = []
+    session_id: Optional[str] = None
 
 class TTSRequest(BaseModel):
     text: str
@@ -153,161 +143,14 @@ class WellnessCompleteRequest(BaseModel):
     mood_after:          Optional[str] = None
 
 
-# ── Auth endpoints ────────────────────────────────────────────────────────────
-
-@app.post("/auth/send-otp")
-async def send_otp(req: SendOTPRequest):
-    """Generate a 6-digit OTP and store it. In production: send via SMS."""
-    otp  = "".join(random.choices(string.digits, k=6))
-    expiry = datetime.utcnow() + timedelta(minutes=10)
-
-    with get_db() as db:
-        # Invalidate old OTPs for this phone
-        db.query(AuthSession).filter(AuthSession.phone == req.phone).delete()
-
-        session = AuthSession(
-            phone=req.phone,
-            otp_code=otp,
-            otp_expires_at=expiry,
-        )
-        db.add(session)
-
-    logging.debug("[OTP] %s -> %s", req.phone, otp)  # send real SMS here
-    return {"status": "sent", "expires_in": 600}
-
-
-@app.post("/auth/verify-otp")
-async def verify_otp(req: VerifyOTPRequest):
-    """Verify OTP. Returns existing patient or signals new-user registration needed."""
-    with get_db() as db:
-        session = (
-            db.query(AuthSession)
-            .filter(
-                AuthSession.phone    == req.phone,
-                AuthSession.otp_code == req.otp,
-            )
-            .order_by(AuthSession.created_at.desc())
-            .first()
-        )
-
-        if not session:
-            raise HTTPException(status_code=401, detail="Invalid OTP")
-
-        if session.otp_expires_at and datetime.utcnow() > session.otp_expires_at:
-            raise HTTPException(status_code=401, detail="OTP expired")
-
-        # Check if patient already exists
-        patient = db.query(Patient).filter(Patient.phone == req.phone).first()
-
-        if patient:
-            token = "maya." + str(uuid.uuid4())
-            session.token      = token
-            session.patient_id = patient.id
-            session.otp_code   = None  # consume OTP
-
-            return {
-                "status":     "existing_user",
-                "token":      token,
-                "patient_id": patient.id,
-                "user": {
-                    "id":              patient.id,
-                    "phone":           patient.phone,
-                    "name":            patient.name,
-                    "pregnancyWeek":   patient.pregnancy_week,
-                    "lang":            patient.lang,
-                    "age":             patient.age,
-                    "city":            patient.city,
-                    "bloodGroup":      patient.blood_group,
-                    "isFirstPregnancy": patient.is_first_pregnancy,
-                },
-            }
-
-        # New user — return signal for registration
-        reg_token = "reg." + str(uuid.uuid4())
-        session.token    = reg_token
-        session.otp_code = None
-
-        return {
-            "status":      "new_user",
-            "token":       reg_token,
-            "patient_id":  None,
-        }
-
-
-@app.post("/auth/register")
-async def register(req: RegisterRequest):
-    """Register a new patient after OTP verification."""
-    with get_db() as db:
-        existing = db.query(Patient).filter(Patient.phone == req.phone).first()
-        if existing:
-            raise HTTPException(status_code=400, detail="Phone already registered")
-
-        from datetime import date
-        due_date = None
-        if req.pregnancy_week:
-            weeks_remaining = 40 - req.pregnancy_week
-            due_date = (date.today() + timedelta(weeks=weeks_remaining)).isoformat()
-
-        patient = Patient(
-            phone=req.phone,
-            name=req.name,
-            pregnancy_week=req.pregnancy_week,
-            lang=req.lang,
-            age=req.age,
-            city=req.city,
-            blood_group=req.blood_group,
-            is_first_pregnancy=req.is_first_pregnancy if req.is_first_pregnancy is not None else True,
-            guardian_name=req.guardian_name,
-            guardian_phone=req.guardian_phone,
-            due_date=due_date,
-        )
-        db.add(patient)
-        db.flush()  # get the id
-
-        token = "maya." + str(uuid.uuid4())
-
-        # Link auth session
-        session = (
-            db.query(AuthSession)
-            .filter(AuthSession.phone == req.phone)
-            .order_by(AuthSession.created_at.desc())
-            .first()
-        )
-        if session:
-            session.patient_id = patient.id
-            session.token      = token
-
-        return {
-            "status": "registered",
-            "token":  token,
-            "user": {
-                "id":              patient.id,
-                "phone":           patient.phone,
-                "name":            patient.name,
-                "pregnancyWeek":   patient.pregnancy_week,
-                "lang":            patient.lang,
-                "age":             patient.age,
-                "city":            patient.city,
-                "bloodGroup":      patient.blood_group,
-                "isFirstPregnancy": patient.is_first_pregnancy,
-            },
-        }
-
-
 # ── Profile endpoints ────────────────────────────────────────────────────────
 
 @app.get("/profile/{patient_id}")
 async def get_profile(patient_id: str, authorization: Optional[str] = Header(None)):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing Authorization header")
-    token = authorization.split(" ", 1)[1]
+    verify_access_token(authorization.split(" ", 1)[1])
     with get_db() as db:
-        session = db.query(AuthSession).filter(
-            AuthSession.token == token,
-            AuthSession.patient_id == patient_id,
-        ).first()
-        if not session:
-            raise HTTPException(status_code=401, detail="Invalid token")
         patient = db.query(Patient).filter(Patient.id == patient_id).first()
         if not patient:
             raise HTTPException(status_code=404, detail="Patient not found")
@@ -339,14 +182,8 @@ async def update_profile(
 ):
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing Authorization header")
-    token = authorization.split(" ", 1)[1]
+    verify_access_token(authorization.split(" ", 1)[1])
     with get_db() as db:
-        session = db.query(AuthSession).filter(
-            AuthSession.token == token,
-            AuthSession.patient_id == patient_id,
-        ).first()
-        if not session:
-            raise HTTPException(status_code=401, detail="Invalid token")
         patient = db.query(Patient).filter(Patient.id == patient_id).first()
         if not patient:
             raise HTTPException(status_code=404, detail="Patient not found")
@@ -395,14 +232,7 @@ async def ask(req: AskRequest, authorization: Optional[str] = Header(None)):
     if not is_guest:
         if not authorization or not authorization.startswith("Bearer "):
             raise HTTPException(status_code=401, detail="Missing Authorization header")
-        token = authorization.split(" ", 1)[1]
-        with get_db() as db:
-            session = db.query(AuthSession).filter(
-                AuthSession.token == token,
-                AuthSession.patient_id == req.patient_id,
-            ).first()
-            if not session:
-                raise HTTPException(status_code=401, detail="Invalid token")
+        verify_access_token(authorization.split(" ", 1)[1])
 
     try:
         initial_state: MayaState = {
@@ -430,8 +260,8 @@ async def ask(req: AskRequest, authorization: Optional[str] = Header(None)):
         final_state = await get_graph().ainvoke(initial_state)
 
         if not is_guest:
-            save_conversation(req.patient_id, "user", req.message)
-            save_conversation(req.patient_id, "tara", final_state.get("message", ""))
+            save_conversation(req.patient_id, "user", req.message, req.session_id)
+            save_conversation(req.patient_id, "tara", final_state.get("message", ""), req.session_id)
 
         return compose_tara_response(final_state)
 
@@ -497,6 +327,81 @@ async def get_proactive_message(patient_id: str):
             "message":      msg.message,
             "concern_type": msg.concern_type,
         }
+
+
+# ── Conversation history ──────────────────────────────────────────────────────
+
+@app.get("/conversations/{patient_id}")
+async def list_conversations(patient_id: str, authorization: Optional[str] = Header(None)):
+    """Return a summary list of all conversation sessions for a patient."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    verify_access_token(authorization.split(" ", 1)[1])
+    sessions: dict = {}
+    with get_db() as db:
+        # Query specific columns → plain tuples, no ORM lazy-loading
+        rows = (
+            db.query(
+                Conversation.session_id,
+                Conversation.role,
+                Conversation.content,
+                Conversation.created_at,
+            )
+            .filter(
+                Conversation.patient_id == patient_id,
+                Conversation.session_id.isnot(None),
+            )
+            .order_by(Conversation.created_at.asc())
+            .all()
+        )
+        for sid, role, content, created_at in rows:
+            ts = created_at.isoformat()
+            if sid not in sessions:
+                sessions[sid] = {"session_id": sid, "name": "", "message_count": 0,
+                                 "started_at": ts, "updated_at": ts}
+            sessions[sid]["message_count"] += 1
+            sessions[sid]["updated_at"] = ts
+            if not sessions[sid]["name"] and role == "user":
+                sessions[sid]["name"] = content[:60]
+
+    return sorted(sessions.values(), key=lambda s: s["updated_at"], reverse=True)
+
+
+@app.get("/conversations/{patient_id}/{session_id}")
+async def get_conversation_messages(
+    patient_id: str, session_id: str, authorization: Optional[str] = Header(None)
+):
+    """Return all messages for a specific conversation session."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    verify_access_token(authorization.split(" ", 1)[1])
+    with get_db() as db:
+        rows = (
+            db.query(Conversation.role, Conversation.content, Conversation.created_at)
+            .filter(
+                Conversation.patient_id == patient_id,
+                Conversation.session_id == session_id,
+            )
+            .order_by(Conversation.created_at.asc())
+            .all()
+        )
+        return [{"role": role, "content": content, "created_at": created_at.isoformat()} for role, content, created_at in rows]
+
+
+@app.delete("/conversations/{patient_id}/{session_id}")
+async def delete_conversation(
+    patient_id: str, session_id: str, authorization: Optional[str] = Header(None)
+):
+    """Delete all messages for a specific conversation session."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    verify_access_token(authorization.split(" ", 1)[1])
+    with get_db() as db:
+        db.query(Conversation).filter(
+            Conversation.patient_id == patient_id,
+            Conversation.session_id == session_id,
+        ).delete()
+    return {"status": "deleted"}
 
 
 # ── Health log ────────────────────────────────────────────────────────────────
@@ -655,14 +560,7 @@ async def wellness_complete(
     if not is_guest:
         if not authorization or not authorization.startswith("Bearer "):
             raise HTTPException(status_code=401, detail="Missing Authorization header")
-        token = authorization.split(" ", 1)[1]
-        with get_db() as db:
-            session = db.query(AuthSession).filter(
-                AuthSession.token == token,
-                AuthSession.patient_id == req.patient_id,
-            ).first()
-            if not session:
-                raise HTTPException(status_code=401, detail="Invalid token")
+        verify_access_token(authorization.split(" ", 1)[1])
 
     if not is_guest:
         with get_db() as db:
@@ -693,15 +591,8 @@ async def wellness_mood_history(
     """Return the last N days of mood logs for the mood graph."""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing Authorization header")
-    token = authorization.split(" ", 1)[1]
+    verify_access_token(authorization.split(" ", 1)[1])
     with get_db() as db:
-        session = db.query(AuthSession).filter(
-            AuthSession.token == token,
-            AuthSession.patient_id == patient_id,
-        ).first()
-        if not session:
-            raise HTTPException(status_code=401, detail="Invalid token")
-
         cutoff = datetime.utcnow() - timedelta(days=days)
         logs = (
             db.query(HealthLog)

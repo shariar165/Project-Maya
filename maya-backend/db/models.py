@@ -17,7 +17,10 @@ class Patient(Base):
 
     id                  = Column(String, primary_key=True, default=_uuid)
     name                = Column(String, nullable=False)
-    phone               = Column(String, unique=True, nullable=False)
+    email               = Column(String, unique=True, nullable=True)   # primary identifier
+    password_hash       = Column(String, nullable=True)
+    email_verified      = Column(Boolean, default=False)
+    phone               = Column(String, unique=True, nullable=True)   # guardian contact
     age                 = Column(Integer, nullable=True)
     pregnancy_week      = Column(Integer, default=1)
     risk_level          = Column(String, default="low")   # low | medium | high
@@ -28,10 +31,10 @@ class Patient(Base):
     guardian_phone      = Column(String, nullable=True)
     health_worker_phone = Column(String, nullable=True)
     health_worker_id    = Column(String, nullable=True)
-    status              = Column(String, default="active")
-    due_date            = Column(String, nullable=True)   # ISO date string
-    lang                = Column(String, default="bn")    # bn | en | mixed
-    theme               = Column(String, default="dawn")   # dawn | dusk | night
+    status              = Column(String, default="active")  # pending_verification | active
+    due_date            = Column(String, nullable=True)     # ISO date string
+    lang                = Column(String, default="bn")      # bn | en | mixed
+    theme               = Column(String, default="dawn")    # dawn | dusk | night
     notifications       = Column(Text, nullable=True)       # JSON: {daily,kicks,meds,mood}
     voice_settings      = Column(Text, nullable=True)       # JSON: {wake,tone}
     city                = Column(String, nullable=True)
@@ -40,11 +43,25 @@ class Patient(Base):
     created_at          = Column(DateTime, default=datetime.utcnow)
 
 
+class Session(Base):
+    """JWT refresh token sessions — one row per active device/login."""
+    __tablename__ = "sessions"
+
+    id           = Column(String, primary_key=True, default=_uuid)
+    patient_id   = Column(String, ForeignKey("patients.id"), nullable=False)
+    refresh_jti  = Column(String, unique=True, nullable=False)  # JWT ID
+    refresh_hash = Column(String, nullable=False)               # SHA-256 of refresh token
+    expires_at   = Column(DateTime, nullable=False)
+    revoked      = Column(Boolean, default=False)
+    created_at   = Column(DateTime, default=datetime.utcnow)
+
+
 class AuthSession(Base):
+    """Legacy phone-OTP sessions — kept for DB compatibility, no longer written to."""
     __tablename__ = "auth_sessions"
 
     id             = Column(String, primary_key=True, default=_uuid)
-    phone          = Column(String, nullable=False)
+    phone          = Column(String, nullable=True)
     patient_id     = Column(String, ForeignKey("patients.id"), nullable=True)
     token          = Column(String, unique=True, nullable=True)
     otp_code       = Column(String, nullable=True)
@@ -68,6 +85,7 @@ class Conversation(Base):
 
     id         = Column(String, primary_key=True, default=_uuid)
     patient_id = Column(String, ForeignKey("patients.id"), nullable=False)
+    session_id = Column(String, nullable=True, index=True)  # groups turns into one thread
     role       = Column(String, nullable=False)   # user | tara
     content    = Column(Text, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)

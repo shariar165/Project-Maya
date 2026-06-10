@@ -274,6 +274,8 @@ const _saveConvo = (id, messages, nameHint) => {
 const _delConvo = (id) => {
   localStorage.setItem('maya_conversations', JSON.stringify(_getConvos().filter(c => c.id !== id)));
 };
+const _chatSession = () => { try { return JSON.parse(localStorage.getItem('maya_session') || 'null'); } catch { return null; } };
+const _chatPid     = () => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}').id || 'guest'; } catch { return 'guest'; } };
 
 function ChatScreen({ state, setState, openScreen, chatMsgs, setChatMsgs, chatConvId, setChatConvId }) {
   const { iconBtn, primaryBtn } = window.uiBtns;
@@ -310,6 +312,7 @@ function ChatScreen({ state, setState, openScreen, chatMsgs, setChatMsgs, chatCo
           patient_id: patientId,
           message: text,
           source: 'chat',
+          session_id: cid,
           context: msgs.slice(-10).map(m => ({ role: m.who === 'user' ? 'user' : 'tara', content: m.t })),
         }),
       });
@@ -345,8 +348,28 @@ function ChatScreen({ state, setState, openScreen, chatMsgs, setChatMsgs, chatCo
           iconBtn={iconBtn}
           activeConvId={convId}
           onClose={() => setShowHistory(false)}
-          onSelect={(c) => { setMsgs(c.messages); setConvId(c.id); setShowHistory(false); }}
-          onDelete={(id) => { _delConvo(id); }}
+          onSelect={async (c) => {
+            setShowHistory(false);
+            if (c.messages) {
+              setMsgs(c.messages); setConvId(c.id);
+            } else {
+              const sess = _chatSession(); const pid = _chatPid();
+              try {
+                const r = await fetch(`${window.BACKEND_URL}/conversations/${pid}/${c.session_id}`, { headers: { Authorization: `Bearer ${sess?.token || ''}` } });
+                const rows = await r.json();
+                const loaded = rows.map(row => ({ who: row.role === 'user' ? 'user' : 'tara', t: row.content, emo: row.role === 'tara' ? 'caring' : undefined }));
+                setMsgs(loaded.length ? loaded : [{ who: 'tara', t: window.tStr('taraOpening', state.lang, 'tara'), emo: 'caring' }]);
+              } catch { setMsgs([{ who: 'tara', t: window.tStr('taraOpening', state.lang, 'tara'), emo: 'caring' }]); }
+              setConvId(c.session_id);
+            }
+          }}
+          onDelete={(id) => {
+            _delConvo(id);
+            const sess = _chatSession(); const pid = _chatPid();
+            if (sess && !sess.isGuest && sess.token && pid !== 'guest') {
+              fetch(`${window.BACKEND_URL}/conversations/${pid}/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${sess.token}` } }).catch(() => {});
+            }
+          }}
           onNew={() => {
             setMsgs([{ who: 'tara', t: L('taraOpening', 'tara'), emo: 'caring' }]);
             setConvId(null);
@@ -481,10 +504,30 @@ function Bubble({ m, onChip }) {
 function ConversationHistoryPanel({ lang, iconBtn, activeConvId, onClose, onSelect, onDelete, onNew }) {
   const L = (key, type) => window.tStr(key, lang, type);
   const [convos, setConvos] = React.useState(_getConvos());
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const sess = _chatSession(); const pid = _chatPid();
+    if (!sess || sess.isGuest || !sess.token || pid === 'guest') { setLoading(false); return; }
+    fetch(`${window.BACKEND_URL}/conversations/${pid}`, { headers: { Authorization: `Bearer ${sess.token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(backendList => {
+        if (!backendList) { setLoading(false); return; }
+        const backendIds = new Set(backendList.map(c => c.session_id));
+        const lsOnly = _getConvos().filter(c => !backendIds.has(c.id));
+        const merged = [
+          ...backendList.map(c => ({ id: c.session_id, session_id: c.session_id, name: c.name || 'Conversation', updatedAt: c.updated_at, startedAt: c.started_at })),
+          ...lsOnly,
+        ];
+        setConvos(merged);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
 
   const handleDelete = (id) => {
     onDelete(id);
-    setConvos(_getConvos());
+    setConvos(prev => prev.filter(c => c.id !== id));
   };
 
   const relDate = (iso) => {
@@ -518,7 +561,9 @@ function ConversationHistoryPanel({ lang, iconBtn, activeConvId, onClose, onSele
         <span style={{ fontSize: 14, fontWeight: 600, color: '#FFF1E4' }}>{L('newConversation')}</span>
       </button>
       <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
-        {convos.length === 0 ? (
+        {loading ? (
+          <div style={{ padding: '50px 24px', textAlign: 'center', color: '#7A5E78', fontSize: 13 }}>Loading…</div>
+        ) : convos.length === 0 ? (
           <div style={{ padding: '50px 24px', textAlign: 'center', color: '#7A5E78', fontSize: 14, lineHeight: 1.6 }}>
             {L('noConversations')}
           </div>
