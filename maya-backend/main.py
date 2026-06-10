@@ -47,8 +47,6 @@ scheduler = BackgroundScheduler()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     import asyncio
-    from rag.embedder import get_embedding
-    from rag.reranker import rerank
 
     init_db()
 
@@ -57,8 +55,6 @@ async def lifespan(app: FastAPI):
     # Pre-build LangGraph + warm RAG models in threads (avoid blocking event loop)
     await asyncio.gather(
         loop.run_in_executor(None, get_graph),
-        loop.run_in_executor(None, lambda: get_embedding("warmup")),
-        loop.run_in_executor(None, lambda: rerank("warmup", ["warmup text"], top_n=1)),
         loop.run_in_executor(
             None,
             lambda: build_emotion_classifier("docs/raw/data/merged_emotion.csv"),

@@ -1,23 +1,27 @@
+import json
 import logging
-from sentence_transformers import CrossEncoder
+from config import GEMINI_API_KEY, GEMINI_MODEL
 
 log = logging.getLogger("maya.reranker")
-_reranker = None
-
-
-def _get_reranker() -> CrossEncoder:
-    global _reranker
-    if _reranker is None:
-        log.info("Loading cross-encoder/ms-marco-MiniLM-L-6-v2 ...")
-        _reranker = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-6-v2")
-        log.info("Reranker model loaded.")
-    return _reranker
 
 
 def rerank(query: str, docs: list[str], top_n: int = 3) -> list[str]:
     if not docs:
         return []
-    pairs  = [(query, doc) for doc in docs]
-    scores = _get_reranker().predict(pairs)
-    ranked = sorted(zip(docs, scores), key=lambda x: x[1], reverse=True)
-    return [doc for doc, _ in ranked[:top_n]]
+    if len(docs) <= top_n:
+        return docs[:top_n]
+    try:
+        from google import genai
+        client = genai.Client(api_key=GEMINI_API_KEY)
+        numbered = "\n".join(f"{i}: {d[:300]}" for i, d in enumerate(docs))
+        prompt = (
+            f"Query: {query}\n\nCandidates:\n{numbered}\n\n"
+            f"Return the indices of the {top_n} most relevant candidates "
+            f"as a JSON array of integers, most relevant first. Output only the JSON array."
+        )
+        resp = client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
+        indices = json.loads(resp.text.strip())
+        return [docs[i] for i in indices if isinstance(i, int) and 0 <= i < len(docs)][:top_n]
+    except Exception as e:
+        log.warning("Gemini reranker failed (%s): %s — using original order", type(e).__name__, e)
+        return docs[:top_n]

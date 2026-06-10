@@ -1,18 +1,21 @@
 import logging
-from sentence_transformers import SentenceTransformer
 
 log = logging.getLogger("maya.embedder")
 _model = None
 
+_MODEL_NAME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 
-def _get_model() -> SentenceTransformer:
+
+def _get_model():
     global _model
     if _model is None:
-        log.info("Loading paraphrase-multilingual-MiniLM-L12-v2 ...")
-        _model = SentenceTransformer("paraphrase-multilingual-MiniLM-L12-v2")
-        log.info("Embedder model loaded.")
+        from fastembed import TextEmbedding
+        log.info("Loading %s via fastembed (ONNX) ...", _MODEL_NAME)
+        _model = TextEmbedding(_MODEL_NAME)
+        log.info("Embedder ready.")
     return _model
 
 
-def get_embedding(text: str) -> list[float]:
-    return _get_model().encode(text, normalize_embeddings=True).tolist()
+def get_embedding(text: str, task_type: str = "RETRIEVAL_QUERY") -> list[float]:
+    model = _get_model()
+    return next(model.embed([text])).tolist()

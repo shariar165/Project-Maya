@@ -64,7 +64,7 @@ def ingest_pdf(pdf_path: str, metadata: dict, contextualize: bool = True):
         else:
             enriched = chunk
 
-        embedding = get_embedding(enriched)
+        embedding = get_embedding(enriched, task_type="RETRIEVAL_DOCUMENT")
         collection.add(
             ids=[chunk_id],
             embeddings=[embedding],
