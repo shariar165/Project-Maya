@@ -729,6 +729,11 @@ async def root():
     return {"service": "Maya Maternal Health API", "version": "1.0", "status": "running"}
 
 
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
