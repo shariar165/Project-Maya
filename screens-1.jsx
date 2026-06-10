@@ -742,7 +742,7 @@ function VoiceScreen({ state, setState, openScreen }) {
 
     const speakText = (textBn, textEn, onDone) => {
       if (!isSpeakerOn) { scheduleReturn(4500); return; }
-      fetch('http://localhost:8000/tts', {
+      fetch(`${window.BACKEND_URL}/tts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ text: textBn }),
@@ -799,7 +799,7 @@ function VoiceScreen({ state, setState, openScreen }) {
         const userRaw = localStorage.getItem('maya_user');
         const patientId = userRaw ? (JSON.parse(userRaw).id || JSON.parse(userRaw).patient_id || '') : '';
 
-        const res = await fetch('http://localhost:8000/ask', {
+        const res = await fetch(`${window.BACKEND_URL}/ask`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ patient_id: patientId, message: msg, source: 'voice' }),
