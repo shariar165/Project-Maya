@@ -56,6 +56,19 @@ class Session(Base):
     created_at   = Column(DateTime, default=datetime.utcnow)
 
 
+class OtpCode(Base):
+    """Short-lived OTP codes for email verification and password reset."""
+    __tablename__ = "otp_codes"
+
+    id         = Column(String, primary_key=True, default=_uuid)
+    email      = Column(String, nullable=False, index=True)
+    purpose    = Column(String, nullable=False)   # "registration" | "password_reset"
+    code_hash  = Column(String, nullable=False)
+    attempts   = Column(Integer, default=0)
+    expires_at = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class AuthSession(Base):
     """Legacy phone-OTP sessions — kept for DB compatibility, no longer written to."""
     __tablename__ = "auth_sessions"

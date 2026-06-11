@@ -16,7 +16,7 @@ from auth.token import (
 from auth.otp import generate_and_store, verify as verify_otp
 from auth.email_service import send_verification_email, send_password_reset_email
 from db.models import Patient, Session
-from db.session import get_db, get_redis
+from db.session import get_db
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -121,14 +121,13 @@ class ResetPasswordRequest(BaseModel):
 @router.post("/register")
 @limiter.limit("5/minute")
 async def register(request: Request, req: RegisterRequest):
-    redis = await get_redis()
     email = req.email.strip().lower()
 
     with get_db() as db:
         existing = db.query(Patient).filter(Patient.email == email).first()
         if existing:
             if existing.status == "pending_verification":
-                code = await generate_and_store(redis, email, "registration")
+                code = generate_and_store(email, "registration")
                 await send_verification_email(req.email, code)
                 raise HTTPException(
                     status_code=409,
@@ -157,17 +156,16 @@ async def register(request: Request, req: RegisterRequest):
             email_verified=False,
         ))
 
-    code = await generate_and_store(redis, email, "registration")
+    code = generate_and_store(email, "registration")
     await send_verification_email(req.email, code)
     return {"status": "pending_verification", "message": "Verification code sent to your email"}
 
 
 @router.post("/verify-email")
 async def verify_email(req: VerifyEmailRequest):
-    redis = await get_redis()
     email = req.email.strip().lower()
 
-    valid = await verify_otp(redis, email, "registration", req.otp)
+    valid = verify_otp(email, "registration", req.otp)
     if not valid:
         raise HTTPException(status_code=401, detail="Invalid or expired code")
 
@@ -187,7 +185,6 @@ async def verify_email(req: VerifyEmailRequest):
 @router.post("/resend-verification")
 @limiter.limit("5/minute")
 async def resend_verification(request: Request, req: ResendRequest):
-    redis = await get_redis()
     email = req.email.strip().lower()
 
     with get_db() as db:
@@ -198,7 +195,7 @@ async def resend_verification(request: Request, req: ResendRequest):
         if not patient:
             return {"status": "sent"}  # silent, prevent enumeration
 
-    code = await generate_and_store(redis, email, "registration")
+    code = generate_and_store(email, "registration")
     await send_verification_email(req.email, code)
     return {"status": "sent"}
 
@@ -293,7 +290,6 @@ async def logout(req: LogoutRequest):
 @router.post("/forgot-password")
 @limiter.limit("5/minute")
 async def forgot_password(request: Request, req: ForgotPasswordRequest):
-    redis = await get_redis()
     email = req.email.strip().lower()
 
     with get_db() as db:
@@ -303,7 +299,7 @@ async def forgot_password(request: Request, req: ForgotPasswordRequest):
         ).first()
 
     if patient:
-        code = await generate_and_store(redis, email, "password_reset")
+        code = generate_and_store(email, "password_reset")
         await send_password_reset_email(req.email, code)
 
     return {"status": "sent", "message": "If this email is registered, a reset code has been sent"}
@@ -311,10 +307,9 @@ async def forgot_password(request: Request, req: ForgotPasswordRequest):
 
 @router.post("/reset-password")
 async def reset_password(req: ResetPasswordRequest):
-    redis = await get_redis()
     email = req.email.strip().lower()
 
-    valid = await verify_otp(redis, email, "password_reset", req.otp)
+    valid = verify_otp(email, "password_reset", req.otp)
     if not valid:
         raise HTTPException(status_code=401, detail="Invalid or expired code")
 

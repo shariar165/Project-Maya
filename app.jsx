@@ -161,7 +161,9 @@ function BottomNav({ screen, setScreen, lang }) {
 
 function App() {
   const [showSplash, setShowSplash] = React.useState(true);
-  const [showIntro, setShowIntro] = React.useState(true);
+  const [showIntro, setShowIntro] = React.useState(
+    () => !localStorage.getItem('maya_intro_seen')
+  );
   const [screen, setScreen] = React.useState('home');
 
   // auth state: 'loading' | 'unauthenticated' | 'authenticated' | 'guest'
@@ -209,27 +211,42 @@ function App() {
     };
   });
 
-  // On mount: check for existing session
+  // On mount: check for existing session, recover missing user via token refresh
   React.useEffect(() => {
-    const session = loadSession();
-    if (!session) { setAuthStatus('unauthenticated'); return; }
-    if (session.isGuest) { setAuthStatus('guest'); return; }
-    const user = loadUser();
-    if (!user) { setAuthStatus('unauthenticated'); return; }
-    setAuthStatus('authenticated');
-    setState(s => ({
-      ...s,
-      name: user.name,
-      week: user.pregnancyWeek,
-      lang: user.lang,
-    }));
-    setTweak('mothersName', user.name);
-    setTweak('week', user.pregnancyWeek);
-    setTweak('lang', user.lang);
-    try {
-      const p = JSON.parse(localStorage.getItem('maya_prefs') || 'null');
-      if (p?.theme) setTweak('theme', p.theme);
-    } catch {}
+    async function checkAuth() {
+      const session = loadSession();
+      if (!session) { setAuthStatus('unauthenticated'); return; }
+      if (session.isGuest) { setAuthStatus('guest'); return; }
+
+      let user = loadUser();
+
+      if (!user) {
+        // Session valid but maya_user missing — try silent refresh which repopulates it
+        const ok = await window.refreshTokens();
+        if (ok) user = loadUser();
+      }
+
+      if (!user) {
+        // Still no profile — session is stale, force re-auth
+        localStorage.removeItem('maya_session');
+        setAuthStatus('unauthenticated');
+        return;
+      }
+
+      // Background-refresh access token so first API call always uses a fresh token
+      window.refreshTokens().catch(() => {});
+
+      setAuthStatus('authenticated');
+      setState(s => ({ ...s, name: user.name, week: user.pregnancyWeek, lang: user.lang }));
+      setTweak('mothersName', user.name);
+      setTweak('week', user.pregnancyWeek);
+      setTweak('lang', user.lang);
+      try {
+        const p = JSON.parse(localStorage.getItem('maya_prefs') || 'null');
+        if (p?.theme) setTweak('theme', p.theme);
+      } catch {}
+    }
+    checkAuth();
   }, []);
 
   React.useEffect(() => {
@@ -249,6 +266,7 @@ function App() {
     localStorage.removeItem('maya_refresh_token');
     localStorage.removeItem('maya_user');
     localStorage.removeItem('maya_prefs');
+    localStorage.removeItem('maya_intro_seen');
     setAuthStatus('unauthenticated');
     setAuthFlow(null);
     setShowSplash(true);
@@ -339,7 +357,7 @@ function App() {
       {!isVoice && !isSubPage && <BottomNav screen={screen} setScreen={setScreen} lang={t.lang}/>}
 
       {showIntro && !showSplash && (authStatus === 'authenticated' || authStatus === 'guest') &&
-        <Onboarding onDone={() => setShowIntro(false)} state={state} setState={setState}/>}
+        <Onboarding onDone={() => { localStorage.setItem('maya_intro_seen', '1'); setShowIntro(false); }} state={state} setState={setState}/>}
       {showSplash && <window.SplashScreen onDone={() => setShowSplash(false)}/>}
 
       {/* auth overlay — shown after splash, when unauthenticated */}

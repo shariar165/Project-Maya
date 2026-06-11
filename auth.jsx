@@ -3,6 +3,14 @@
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 
+async function authFetch(url, options) {
+  const res = await fetch(url, options);
+  const text = await res.text();
+  let data = {};
+  try { data = JSON.parse(text); } catch {}
+  return { res, data };
+}
+
 function saveTokens(accessToken, refreshToken, userId) {
   localStorage.setItem('maya_access_token', accessToken);
   localStorage.setItem('maya_refresh_token', refreshToken);
@@ -58,18 +66,17 @@ function AuthScreen({ onOtp, onLoggedIn, onGuest }) {
     if (!validForm) return;
     setLoading(true); setError('');
     try {
-      const res = await fetch(`${window.BACKEND_URL}/auth/login`, {
+      const { res, data } = await authFetch(`${window.BACKEND_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.detail || 'Login failed'); return; }
+      if (!res.ok) { setError(data.detail || `Login failed (${res.status})`); return; }
       saveTokens(data.access_token, data.refresh_token, data.patient_id);
       localStorage.setItem('maya_user', JSON.stringify(data.user));
       onLoggedIn(data.user);
     } catch {
-      setError('Could not connect. Is the server running?');
+      setError('Could not connect. Check your internet connection.');
     } finally { setLoading(false); }
   };
 
@@ -267,17 +274,16 @@ function OTPScreen({ email, flow, onVerified, onBack, newPassword }) {
         return;
       }
 
-      const res = await fetch(`${window.BACKEND_URL}/auth/verify-email`, {
+      const { res, data } = await authFetch(`${window.BACKEND_URL}/auth/verify-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp: code }),
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.detail || 'Invalid code'); return; }
+      if (!res.ok) { setError(data.detail || `Verification failed (${res.status})`); return; }
       saveTokens(data.access_token, data.refresh_token, data.patient_id);
       localStorage.setItem('maya_user', JSON.stringify(data.user));
       onVerified({ isNew: true, user: data.user });
-    } catch { setError('Could not verify. Is the server running?'); }
+    } catch { setError('Could not verify. Check your internet connection.'); }
     finally { setLoading(false); }
   };
 
@@ -384,7 +390,7 @@ function RegisterScreen({ email, password, onDone, onVerifyEmail }) {
   const handleSubmit = async () => {
     setLoading(true); setError('');
     try {
-      const res = await fetch(`${window.BACKEND_URL}/auth/register`, {
+      const { res, data } = await authFetch(`${window.BACKEND_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -395,15 +401,14 @@ function RegisterScreen({ email, password, onDone, onVerifyEmail }) {
           lang,
         }),
       });
-      const data = await res.json();
       // 409 = already registered but unverified (OTP resent) — still proceed to verify
       if (!res.ok && res.status !== 409) {
-        setError(data.detail || 'Registration failed');
+        setError(data.detail || `Registration failed (${res.status})`);
         return;
       }
       // Go to OTP verification screen
       onVerifyEmail(email);
-    } catch { setError('Could not connect. Is the server running?'); }
+    } catch { setError('Could not connect. Check your internet connection.'); }
     finally { setLoading(false); }
   };
 
