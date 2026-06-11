@@ -317,7 +317,9 @@ function App() {
   // OTPScreen fires this after email verification succeeds
   const handleOtpVerified = ({ isNew, user }) => { applyUser(user); };
   // RegisterScreen fires this to transition to OTP verification
-  const handleVerifyEmail = (email) => { setPendingEmail(email); setAuthFlow('otp'); };
+  // emailSent=false means SMTP failed; OTPScreen shows resend immediately
+  const [otpEmailSent, setOtpEmailSent] = React.useState(true);
+  const handleVerifyEmail = (email, emailSent = true) => { setPendingEmail(email); setOtpEmailSent(emailSent); setAuthFlow('otp'); };
   const handleGuest = () => { setAuthStatus('guest'); };
 
   if (authStatus === 'loading') return null;
@@ -366,7 +368,7 @@ function App() {
       {!showSplash && authStatus === 'unauthenticated' && authFlow === 'register-form' &&
         <window.RegisterScreen email={pendingEmail} password={pendingPassword} onVerifyEmail={handleVerifyEmail} onDone={applyUser}/>}
       {!showSplash && authStatus === 'unauthenticated' && authFlow === 'otp' &&
-        <window.OTPScreen email={pendingEmail} flow="verify" onVerified={handleOtpVerified} onBack={() => setAuthFlow('register-form')}/>}
+        <window.OTPScreen email={pendingEmail} flow="verify" emailSent={otpEmailSent} onVerified={handleOtpVerified} onBack={() => setAuthFlow('register-form')}/>}
       {!showSplash && authStatus === 'unauthenticated' && authFlow === 'forgot' &&
         <window.ForgotPasswordScreen initialEmail={pendingEmail} onBack={() => setAuthFlow(null)} onDone={() => setAuthFlow(null)}/>}
 

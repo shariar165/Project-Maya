@@ -11,6 +11,12 @@ async function authFetch(url, options) {
   return { res, data };
 }
 
+// Picks the best human-readable message from an API error response.
+// Handles FastAPI's {detail} and slowapi's {error} keys.
+function apiErr(data, fallback) {
+  return data.detail || data.error || data.message || fallback;
+}
+
 function saveTokens(accessToken, refreshToken, userId) {
   localStorage.setItem('maya_access_token', accessToken);
   localStorage.setItem('maya_refresh_token', refreshToken);
@@ -71,7 +77,7 @@ function AuthScreen({ onOtp, onLoggedIn, onGuest }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      if (!res.ok) { setError(data.detail || `Login failed (${res.status})`); return; }
+      if (!res.ok) { setError(apiErr(data, `Login failed (${res.status})`)); return; }
       saveTokens(data.access_token, data.refresh_token, data.patient_id);
       localStorage.setItem('maya_user', JSON.stringify(data.user));
       onLoggedIn(data.user);
@@ -230,9 +236,10 @@ function AuthScreen({ onOtp, onLoggedIn, onGuest }) {
 
 // ── OTPScreen ─────────────────────────────────────────────────────────────────
 // Used for: email verification after register, and password reset OTP entry
-function OTPScreen({ email, flow, onVerified, onBack, newPassword }) {
+// emailSent=false means the server couldn't deliver the email — skip countdown, show warning
+function OTPScreen({ email, flow, emailSent = true, onVerified, onBack, newPassword }) {
   const [digits, setDigits]   = React.useState(['', '', '', '', '', '']);
-  const [countdown, setCountdown] = React.useState(30);
+  const [countdown, setCountdown] = React.useState(emailSent ? 30 : 0);
   const [error, setError]     = React.useState('');
   const [loading, setLoading] = React.useState(false);
   const refs = Array.from({ length: 6 }, () => React.useRef());
@@ -279,7 +286,7 @@ function OTPScreen({ email, flow, onVerified, onBack, newPassword }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp: code }),
       });
-      if (!res.ok) { setError(data.detail || `Verification failed (${res.status})`); return; }
+      if (!res.ok) { setError(apiErr(data, `Verification failed (${res.status})`)); return; }
       saveTokens(data.access_token, data.refresh_token, data.patient_id);
       localStorage.setItem('maya_user', JSON.stringify(data.user));
       onVerified({ isNew: true, user: data.user });
@@ -320,8 +327,24 @@ function OTPScreen({ email, flow, onVerified, onBack, newPassword }) {
           Check your email
         </div>
         <div style={{ fontSize: 13, color: '#7A5E78', marginTop: 8, lineHeight: 1.5 }}>
-          Code sent to <strong>{maskEmail(email)}</strong>
+          {emailSent ? <>Code sent to <strong>{maskEmail(email)}</strong></> : <>Enter the code sent to <strong>{maskEmail(email)}</strong></>}
         </div>
+
+        {!emailSent && (
+          <div style={{
+            marginTop: 12, padding: '10px 14px', borderRadius: 12,
+            background: 'rgba(192,57,43,0.08)', border: '1px solid rgba(192,57,43,0.2)',
+            fontSize: 12, color: '#C0392B', lineHeight: 1.5, maxWidth: 280, textAlign: 'center',
+          }}>
+            Email delivery failed. Tap "Resend code" below or check your spam folder.
+          </div>
+        )}
+
+        {emailSent && (
+          <div style={{ fontSize: 11, color: '#9A8595', marginTop: 6 }}>
+            Check spam if you don't see it
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: 10, marginTop: 28 }} onPaste={handlePaste}>
           {digits.map((d, i) => (
@@ -403,11 +426,11 @@ function RegisterScreen({ email, password, onDone, onVerifyEmail }) {
       });
       // 409 = already registered but unverified (OTP resent) — still proceed to verify
       if (!res.ok && res.status !== 409) {
-        setError(data.detail || `Registration failed (${res.status})`);
+        setError(apiErr(data, `Registration failed (${res.status})`));
         return;
       }
-      // Go to OTP verification screen
-      onVerifyEmail(email);
+      // Go to OTP screen; pass email_sent flag so OTP screen can show resend immediately
+      onVerifyEmail(email, data.email_sent !== false);
     } catch { setError('Could not connect. Check your internet connection.'); }
     finally { setLoading(false); }
   };
@@ -548,12 +571,13 @@ function ForgotPasswordScreen({ initialEmail, onBack, onDone }) {
   const sendCode = async () => {
     setLoading(true); setError('');
     try {
-      await fetch(`${window.BACKEND_URL}/auth/forgot-password`, {
+      const { res, data } = await authFetch(`${window.BACKEND_URL}/auth/forgot-password`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
       });
+      if (!res.ok) { setError(apiErr(data, `Could not send code (${res.status})`)); return; }
       setStep(1); setCountdown(30);
-    } catch { setError('Could not connect.'); }
+    } catch { setError('Could not connect. Check your internet connection.'); }
     finally { setLoading(false); }
   };
 
@@ -561,14 +585,13 @@ function ForgotPasswordScreen({ initialEmail, onBack, onDone }) {
     if (newPw.length < 8) { setError('Password must be at least 8 characters'); return; }
     setLoading(true); setError('');
     try {
-      const res = await fetch(`${window.BACKEND_URL}/auth/reset-password`, {
+      const { res, data } = await authFetch(`${window.BACKEND_URL}/auth/reset-password`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp, new_password: newPw }),
       });
-      const data = await res.json();
-      if (!res.ok) { setError(data.detail || 'Reset failed'); return; }
+      if (!res.ok) { setError(apiErr(data, 'Reset failed. The code may have expired — request a new one.')); return; }
       onDone();
-    } catch { setError('Could not connect.'); }
+    } catch { setError('Could not connect. Check your internet connection.'); }
     finally { setLoading(false); }
   };
 

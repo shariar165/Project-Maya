@@ -128,10 +128,11 @@ async def register(request: Request, req: RegisterRequest):
         if existing:
             if existing.status == "pending_verification":
                 code = generate_and_store(email, "registration")
-                await send_verification_email(req.email, code)
+                sent = await send_verification_email(req.email, code)
                 raise HTTPException(
                     status_code=409,
-                    detail="Email already registered but unverified. A new code has been sent.",
+                    detail="Email already registered but unverified. A new code has been sent." if sent
+                           else "Email already registered but unverified. Could not resend email — try 'Resend code' on the next screen.",
                 )
             raise HTTPException(status_code=409, detail="Email already registered")
 
@@ -157,8 +158,13 @@ async def register(request: Request, req: RegisterRequest):
         ))
 
     code = generate_and_store(email, "registration")
-    await send_verification_email(req.email, code)
-    return {"status": "pending_verification", "message": "Verification code sent to your email"}
+    sent = await send_verification_email(req.email, code)
+    return {
+        "status":     "pending_verification",
+        "email_sent": sent,
+        "message":    "Verification code sent to your email" if sent
+                      else "Account created but the email could not be sent. Use 'Resend code' to try again.",
+    }
 
 
 @router.post("/verify-email")
@@ -196,8 +202,8 @@ async def resend_verification(request: Request, req: ResendRequest):
             return {"status": "sent"}  # silent, prevent enumeration
 
     code = generate_and_store(email, "registration")
-    await send_verification_email(req.email, code)
-    return {"status": "sent"}
+    sent = await send_verification_email(req.email, code)
+    return {"status": "sent", "email_sent": sent}
 
 
 @router.post("/login")
@@ -298,11 +304,16 @@ async def forgot_password(request: Request, req: ForgotPasswordRequest):
             Patient.status == "active",
         ).first()
 
+    sent = False
     if patient:
         code = generate_and_store(email, "password_reset")
-        await send_password_reset_email(req.email, code)
+        sent = await send_password_reset_email(req.email, code)
 
-    return {"status": "sent", "message": "If this email is registered, a reset code has been sent"}
+    return {
+        "status":     "sent",
+        "email_sent": sent,
+        "message":    "If this email is registered, a reset code has been sent",
+    }
 
 
 @router.post("/reset-password")
