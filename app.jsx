@@ -166,10 +166,10 @@ function App() {
 
   // auth state: 'loading' | 'unauthenticated' | 'authenticated' | 'guest'
   const [authStatus, setAuthStatus] = React.useState('loading');
-  // auth sub-flow: null | 'otp' | 'register'
+  // auth sub-flow: null | 'register-form' | 'otp' | 'forgot'
   const [authFlow, setAuthFlow] = React.useState(null);
-  const [pendingPhone, setPendingPhone] = React.useState('');
-  const [pendingId, setPendingId] = React.useState('');
+  const [pendingEmail, setPendingEmail]       = React.useState('');
+  const [pendingPassword, setPendingPassword] = React.useState('');
 
   // lifted screen state — survives navigation
   const [chatMsgs, setChatMsgs] = React.useState(() => [
@@ -237,7 +237,16 @@ function App() {
   }, [t.week, t.mothersName, t.lang, t.taraMood]);
 
   const handleLogout = () => {
+    const refresh = localStorage.getItem('maya_refresh_token');
+    if (refresh) {
+      fetch(`${window.BACKEND_URL}/auth/logout`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refresh }),
+      }).catch(() => {});
+    }
     localStorage.removeItem('maya_session');
+    localStorage.removeItem('maya_access_token');
+    localStorage.removeItem('maya_refresh_token');
     localStorage.removeItem('maya_user');
     localStorage.removeItem('maya_prefs');
     setAuthStatus('unauthenticated');
@@ -271,22 +280,7 @@ function App() {
   const isSubPage = ['profile', 'settings', 'risk'].includes(screen);
 
   // auth event handlers
-  const handleOtpRequest = (phone) => { setPendingPhone(phone); setAuthFlow('otp'); };
-  const handleOtpVerified = ({ isNew, user, id, phone }) => {
-    if (!isNew) {
-      setState(s => ({ ...s, name: user.name, week: user.pregnancyWeek, lang: user.lang }));
-      setTweak('mothersName', user.name);
-      setTweak('week', user.pregnancyWeek);
-      setTweak('lang', user.lang);
-      setAuthStatus('authenticated');
-      setAuthFlow(null);
-    } else {
-      setPendingId(id);
-      setPendingPhone(phone || pendingPhone);
-      setAuthFlow('register');
-    }
-  };
-  const handleRegistered = (user) => {
+  const applyUser = (user) => {
     setState(s => ({ ...s, name: user.name, week: user.pregnancyWeek, lang: user.lang }));
     setTweak('mothersName', user.name);
     setTweak('week', user.pregnancyWeek);
@@ -294,6 +288,18 @@ function App() {
     setAuthStatus('authenticated');
     setAuthFlow(null);
   };
+  // AuthScreen fires this for both register-start and forgot-password flows
+  const handleOtpRequest = ({ email, password, flow }) => {
+    setPendingEmail(email || '');
+    setPendingPassword(password || '');
+    setAuthFlow(flow === 'forgot' ? 'forgot' : 'register-form');
+  };
+  // AuthScreen fires this on successful direct login
+  const handleLoggedIn = (user) => { applyUser(user); };
+  // OTPScreen fires this after email verification succeeds
+  const handleOtpVerified = ({ isNew, user }) => { applyUser(user); };
+  // RegisterScreen fires this to transition to OTP verification
+  const handleVerifyEmail = (email) => { setPendingEmail(email); setAuthFlow('otp'); };
   const handleGuest = () => { setAuthStatus('guest'); };
 
   if (authStatus === 'loading') return null;
@@ -338,11 +344,13 @@ function App() {
 
       {/* auth overlay — shown after splash, when unauthenticated */}
       {!showSplash && authStatus === 'unauthenticated' && authFlow === null &&
-        <window.AuthScreen onOtp={handleOtpRequest} onGuest={handleGuest}/>}
+        <window.AuthScreen onOtp={handleOtpRequest} onLoggedIn={handleLoggedIn} onGuest={handleGuest}/>}
+      {!showSplash && authStatus === 'unauthenticated' && authFlow === 'register-form' &&
+        <window.RegisterScreen email={pendingEmail} password={pendingPassword} onVerifyEmail={handleVerifyEmail} onDone={applyUser}/>}
       {!showSplash && authStatus === 'unauthenticated' && authFlow === 'otp' &&
-        <window.OTPScreen phone={pendingPhone} onVerified={handleOtpVerified} onBack={() => setAuthFlow(null)}/>}
-      {!showSplash && authFlow === 'register' &&
-        <window.RegisterScreen userId={pendingId} phone={pendingPhone} onDone={handleRegistered}/>}
+        <window.OTPScreen email={pendingEmail} flow="verify" onVerified={handleOtpVerified} onBack={() => setAuthFlow('register-form')}/>}
+      {!showSplash && authStatus === 'unauthenticated' && authFlow === 'forgot' &&
+        <window.ForgotPasswordScreen initialEmail={pendingEmail} onBack={() => setAuthFlow(null)} onDone={() => setAuthFlow(null)}/>}
 
       {/* Tweaks */}
       <window.TweaksPanel title="Tweaks">

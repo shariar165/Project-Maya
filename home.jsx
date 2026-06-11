@@ -132,7 +132,20 @@ function HomeScreen({ state, setState, openScreen }) {
   const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   const checks = state.checks;
-  const toggleCheck = (k) => setState((s) => ({ ...s, checks: { ...s.checks, [k]: !s.checks[k] } }));
+  const toggleCheck = (k) => {
+    const newVal = !checks[k];
+    setState(s => ({ ...s, checks: { ...s.checks, [k]: newVal } }));
+    if (newVal) {
+      try {
+        const pid = JSON.parse(localStorage.getItem('maya_user') || '{}').id;
+        if (pid) fetch(`${window.BACKEND_URL}/health-log`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ patient_id: pid, data_type: 'checklist', value: k }),
+        }).catch(() => {});
+      } catch {}
+    }
+  };
 
   // Persist daily check state so it survives a refresh and auto-resets on a new day
   React.useEffect(() => {

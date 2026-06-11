@@ -25,6 +25,8 @@ TARA_VOICE_ID      = os.getenv("TARA_VOICE_ID", "9BWtsMINqrJLrRacOk9x")
 MCP_API_KEY        = os.getenv("MCP_API_KEY", "maya-mcp-secret-key-change-in-production")
 N8N_BASE_URL       = os.getenv("N8N_BASE_URL", "http://localhost:5678")
 DATABASE_URL       = os.getenv("DATABASE_URL", "sqlite:///./maya.db")
+REDIS_URL          = os.getenv("REDIS_URL", "redis://localhost:6379")
+JWT_SECRET         = os.getenv("JWT_SECRET", "maya-dev-secret-change-in-production")
 DEBUG              = os.getenv("DEBUG", "True").lower() == "true"
 
 PRIMARY_MODEL  = "claude-sonnet-4-6"

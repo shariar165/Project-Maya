@@ -453,6 +453,439 @@ function SessionPlayer({ session, lang, patientName, week, mood, onClose, onComp
   );
 }
 
+// ── Health Log Sheet ──────────────────────────────────────────────────────────
+
+function HealthLogSheet({ lang, patientId, authToken, onClose, onSaved }) {
+  const tlang = (lang === 'bn' || lang === 'mixed') ? 'bn' : 'en';
+  const t = (en, bn) => tlang === 'bn' ? bn : en;
+
+  const [bp_sys,  setBpSys]  = React.useState('');
+  const [bp_dia,  setBpDia]  = React.useState('');
+  const [weight,  setWeight] = React.useState('');
+  const [sleep,   setSleep]  = React.useState('');
+  const [hydration, setHydration] = React.useState('');
+
+  const [fieldErrors, setFieldErrors] = React.useState({});
+  const [netError,  setNetError]  = React.useState('');
+  const [saving,    setSaving]    = React.useState(false);
+  const [savedOk,   setSavedOk]   = React.useState(false);
+
+  const B = window.BACKEND_URL;
+
+  const validate = () => {
+    const errs = {};
+    const sys = bp_sys.trim(), dia = bp_dia.trim();
+    if (sys || dia) {
+      if (!sys || !dia) errs.bp = t('Enter both systolic and diastolic.', 'সিস্টোলিক ও ডায়াস্টোলিক উভয়ই লিখুন।');
+      else if (isNaN(sys) || Number(sys) < 60 || Number(sys) > 200) errs.bp = t('Systolic must be 60–200.', 'সিস্টোলিক ৬০–২০০ এর মধ্যে হতে হবে।');
+      else if (isNaN(dia) || Number(dia) < 40 || Number(dia) > 120) errs.bp = t('Diastolic must be 40–120.', 'ডায়াস্টোলিক ৪০–১২০ এর মধ্যে হতে হবে।');
+    }
+    if (weight.trim()) {
+      const w = Number(weight);
+      if (isNaN(w) || w < 30 || w > 150) errs.weight = t('Weight must be 30–150 kg.', 'ওজন ৩০–১৫০ কেজির মধ্যে হতে হবে।');
+    }
+    if (sleep.trim()) {
+      const s = Number(sleep);
+      if (isNaN(s) || s < 0 || s > 24) errs.sleep = t('Sleep must be 0–24 hours.', 'ঘুম ০–২৪ ঘণ্টার মধ্যে হতে হবে।');
+    }
+    if (hydration.trim()) {
+      const h = Number(hydration);
+      if (isNaN(h) || h < 0 || h > 20) errs.hydration = t('Glasses must be 0–20.', 'গ্লাস সংখ্যা ০–২০ এর মধ্যে হতে হবে।');
+    }
+    return errs;
+  };
+
+  const hasAnyInput = bp_sys.trim() || bp_dia.trim() || weight.trim() || sleep.trim() || hydration.trim();
+
+  const handleSave = async () => {
+    const errs = validate();
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+    setSaving(true);
+    setNetError('');
+    const hdrs = { 'Content-Type': 'application/json' };
+    const logs = [];
+    if (bp_sys.trim() && bp_dia.trim()) logs.push({ data_type: 'bp',        value: `${bp_sys.trim()}/${bp_dia.trim()}` });
+    if (weight.trim())                   logs.push({ data_type: 'weight',    value: weight.trim() });
+    if (sleep.trim())                    logs.push({ data_type: 'sleep',     value: sleep.trim() });
+    if (hydration.trim())                logs.push({ data_type: 'hydration', value: hydration.trim() });
+
+    const failed = [];
+    for (const log of logs) {
+      try {
+        const res = await fetch(`${B}/health-log`, {
+          method: 'POST', headers: hdrs,
+          body: JSON.stringify({ patient_id: patientId, ...log }),
+        });
+        if (!res.ok) failed.push(log.data_type);
+      } catch {
+        failed.push(log.data_type);
+      }
+    }
+    setSaving(false);
+    if (failed.length === logs.length) {
+      setNetError(t("Couldn't save. Check your connection and retry.", 'সংযোগ সমস্যা। আবার চেষ্টা করুন।'));
+      return;
+    }
+    if (failed.length > 0) {
+      setNetError(t(`Saved some readings. Failed: ${failed.join(', ')}.`, `কিছু তথ্য সেভ হয়নি: ${failed.join(', ')}।`));
+    }
+    setSavedOk(true);
+    onSaved();
+    setTimeout(onClose, 1400);
+  };
+
+  const inputStyle = {
+    flex: 1, padding: '12px 14px', borderRadius: 14,
+    border: '1.5px solid rgba(61,40,64,0.14)',
+    background: 'rgba(255,255,255,0.9)', fontSize: 15,
+    fontFamily: 'var(--ui)', color: '#2A1A36', outline: 'none',
+    WebkitAppearance: 'none', boxSizing: 'border-box',
+  };
+  const labelStyle = { fontSize: 11, color: '#7A5E78', fontWeight: 700, marginBottom: 6, display: 'block', letterSpacing: '0.06em', textTransform: 'uppercase' };
+  const errStyle   = { fontSize: 11, color: '#C0392B', marginTop: 5 };
+
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, zIndex: 60,
+      background: 'linear-gradient(180deg, #FFEFE2 0%, #F4D7E5 60%, #E0D5F0 100%)',
+      display: 'flex', flexDirection: 'column', overflow: 'hidden',
+    }}>
+      <Grain/>
+      {/* Header */}
+      <div style={{ padding: '54px 22px 16px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <button onClick={onClose} style={window.uiBtns.iconBtn}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3D2840" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: 'var(--display)', fontSize: 22, color: '#2A1A36', letterSpacing: '-0.01em', lineHeight: 1 }}>
+            {t("Log today's readings", 'আজকের রিডিং লগ করুন')}
+          </div>
+          <div style={{ fontSize: 12, color: '#5A3E5F', marginTop: 4 }}>
+            {t('Fill any field you have measured today.', 'আজকে যা মেপেছেন তা লিখুন।')}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 22px 24px' }}>
+        {/* Network error banner */}
+        {netError && (
+          <div style={{ background: '#FBD6CB', borderRadius: 14, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#7A2020', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>⚠️</span> {netError}
+          </div>
+        )}
+        {/* Success banner */}
+        {savedOk && (
+          <div style={{ background: '#D4EDDA', borderRadius: 14, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#1B5E20', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>✓</span> {t('Readings saved!', 'রিডিং সেভ হয়েছে!')}
+          </div>
+        )}
+
+        {/* Blood Pressure */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>🩺 {t('Blood Pressure', 'রক্তচাপ')}</label>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input
+              style={{ ...inputStyle, borderColor: fieldErrors.bp ? '#C0392B' : 'rgba(61,40,64,0.14)' }}
+              type="number" inputMode="numeric" placeholder={t('Systolic (e.g. 120)', 'সিস্টোলিক (যেমন ১২০)')}
+              value={bp_sys} onChange={e => { setBpSys(e.target.value); setFieldErrors(er => ({ ...er, bp: '' })); }}
+            />
+            <span style={{ color: '#7A5E78', fontWeight: 700, fontSize: 18 }}>/</span>
+            <input
+              style={{ ...inputStyle, borderColor: fieldErrors.bp ? '#C0392B' : 'rgba(61,40,64,0.14)' }}
+              type="number" inputMode="numeric" placeholder={t('Diastolic (e.g. 80)', 'ডায়াস্টোলিক (যেমন ৮০)')}
+              value={bp_dia} onChange={e => { setBpDia(e.target.value); setFieldErrors(er => ({ ...er, bp: '' })); }}
+            />
+            <span style={{ fontSize: 12, color: '#7A5E78', whiteSpace: 'nowrap' }}>mmHg</span>
+          </div>
+          {fieldErrors.bp && <div style={errStyle}>{fieldErrors.bp}</div>}
+        </div>
+
+        {/* Weight */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>⚖️ {t('Weight', 'ওজন')}</label>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input
+              style={{ ...inputStyle, borderColor: fieldErrors.weight ? '#C0392B' : 'rgba(61,40,64,0.14)' }}
+              type="number" inputMode="decimal" placeholder={t('e.g. 62.5', 'যেমন ৬২.৫')}
+              value={weight} onChange={e => { setWeight(e.target.value); setFieldErrors(er => ({ ...er, weight: '' })); }}
+            />
+            <span style={{ fontSize: 12, color: '#7A5E78' }}>kg</span>
+          </div>
+          {fieldErrors.weight && <div style={errStyle}>{fieldErrors.weight}</div>}
+        </div>
+
+        {/* Sleep */}
+        <div style={{ marginBottom: 20 }}>
+          <label style={labelStyle}>🌙 {t('Sleep last night', 'গতরাতের ঘুম')}</label>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input
+              style={{ ...inputStyle, borderColor: fieldErrors.sleep ? '#C0392B' : 'rgba(61,40,64,0.14)' }}
+              type="number" inputMode="decimal" placeholder={t('e.g. 7.5', 'যেমন ৭.৫')}
+              value={sleep} onChange={e => { setSleep(e.target.value); setFieldErrors(er => ({ ...er, sleep: '' })); }}
+            />
+            <span style={{ fontSize: 12, color: '#7A5E78' }}>{t('hrs', 'ঘণ্টা')}</span>
+          </div>
+          {fieldErrors.sleep && <div style={errStyle}>{fieldErrors.sleep}</div>}
+        </div>
+
+        {/* Hydration */}
+        <div style={{ marginBottom: 28 }}>
+          <label style={labelStyle}>💧 {t('Water intake today', 'আজকের পানি')}</label>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input
+              style={{ ...inputStyle, borderColor: fieldErrors.hydration ? '#C0392B' : 'rgba(61,40,64,0.14)' }}
+              type="number" inputMode="numeric" placeholder={t('Glasses of water', 'পানির গ্লাস')}
+              value={hydration} onChange={e => { setHydration(e.target.value); setFieldErrors(er => ({ ...er, hydration: '' })); }}
+            />
+            <span style={{ fontSize: 12, color: '#7A5E78' }}>{t('glasses', 'গ্লাস')}</span>
+          </div>
+          {fieldErrors.hydration && <div style={errStyle}>{fieldErrors.hydration}</div>}
+        </div>
+
+        <button
+          onClick={handleSave}
+          disabled={!hasAnyInput || saving || savedOk}
+          style={{
+            width: '100%', padding: '16px', borderRadius: 99, border: 'none',
+            background: (!hasAnyInput || saving || savedOk) ? 'rgba(61,40,64,0.2)' : '#3D2840',
+            color: '#FFF1E4', fontSize: 15, fontWeight: 700,
+            cursor: (!hasAnyInput || saving || savedOk) ? 'not-allowed' : 'pointer',
+            boxShadow: (!hasAnyInput || saving || savedOk) ? 'none' : '0 14px 30px -10px rgba(61,40,64,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}
+        >
+          {saving
+            ? <><span style={{ opacity: 0.7 }}>⏳</span> {t('Saving…', 'সেভ হচ্ছে…')}</>
+            : savedOk
+            ? <><span>✓</span> {t('Saved!', 'সেভ হয়েছে!')}</>
+            : t('Save readings', 'রিডিং সেভ করুন')
+          }
+        </button>
+        <div style={{ fontSize: 11, color: '#7A5E78', textAlign: 'center', marginTop: 10 }}>
+          {t('You only need to fill the fields you measured.', 'শুধু যেগুলো মেপেছেন সেগুলো লিখতে হবে।')}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Book Appointment Sheet ────────────────────────────────────────────────────
+
+function BookAppointmentSheet({ lang, patientId, authToken, prefillType, onClose, onSaved }) {
+  const tlang = (lang === 'bn' || lang === 'mixed') ? 'bn' : 'en';
+  const t = (en, bn) => tlang === 'bn' ? bn : en;
+
+  const APPT_TYPES = [
+    { v: 'anc',        en: 'ANC Checkup',  bn: 'ANC চেকআপ'   },
+    { v: 'ultrasound', en: 'Ultrasound',   bn: 'আল্ট্রাসাউন্ড' },
+    { v: 'followup',   en: 'Follow-up',    bn: 'ফলো-আপ'       },
+    { v: 'general',    en: 'General',      bn: 'সাধারণ'        },
+  ];
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const minDate  = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })();
+
+  const [apptType, setApptType] = React.useState(prefillType || 'anc');
+  const [date,     setDate]     = React.useState('');
+  const [time,     setTime]     = React.useState('09:00');
+  const [location, setLocation] = React.useState('');
+  const [errors,   setErrors]   = React.useState({});
+  const [netError, setNetError] = React.useState('');
+  const [saving,   setSaving]   = React.useState(false);
+  const [success,  setSuccess]  = React.useState(false);
+  const taraRef = React.useRef(null);
+
+  const B = window.BACKEND_URL;
+
+  const validate = () => {
+    const errs = {};
+    if (!date) { errs.date = t('Please pick a date.', 'তারিখ বেছে নিন।'); }
+    else {
+      const chosen = new Date(`${date}T${time || '00:00'}:00`);
+      if (chosen <= new Date()) errs.date = t('Please choose a future date and time.', 'ভবিষ্যতের তারিখ ও সময় বেছে নিন।');
+    }
+    return errs;
+  };
+
+  const handleBook = async () => {
+    const errs = validate();
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+    setSaving(true);
+    setNetError('');
+    try {
+      const scheduledAt = `${date}T${time || '09:00'}:00`;
+      const res = await fetch(`${B}/appointments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` },
+        body: JSON.stringify({
+          patient_id:       patientId,
+          appointment_type: apptType,
+          scheduled_at:     scheduledAt,
+          location:         location.trim() || null,
+        }),
+      });
+      if (!res.ok) {
+        let detail = t('Could not book. Try again.', 'বুক করা যায়নি। আবার চেষ্টা করুন।');
+        try { const d = await res.json(); detail = d.detail || detail; } catch {}
+        throw new Error(detail);
+      }
+      setSaving(false);
+      setSuccess(true);
+      taraRef.current?.playCelebration();
+      onSaved();
+      setTimeout(onClose, 2200);
+    } catch (e) {
+      setSaving(false);
+      setNetError(e.message || t('Network error. Check connection and retry.', 'নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।'));
+    }
+  };
+
+  const inputStyle = {
+    width: '100%', padding: '13px 14px', borderRadius: 14,
+    border: '1.5px solid rgba(61,40,64,0.14)',
+    background: 'rgba(255,255,255,0.9)', fontSize: 15,
+    fontFamily: 'var(--ui)', color: '#2A1A36', outline: 'none',
+    WebkitAppearance: 'none', boxSizing: 'border-box',
+  };
+
+  if (success) {
+    return (
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 60,
+        background: 'linear-gradient(180deg, #FFEFE2 0%, #F4D7E5 60%, #E0D5F0 100%)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16,
+      }}>
+        <Grain/>
+        <Tara ref={taraRef} size={180} mood="celebration"/>
+        <div style={{ fontFamily: 'var(--display)', fontSize: 26, color: '#2A1A36', textAlign: 'center', letterSpacing: '-0.02em', padding: '0 32px' }}>
+          {t('Appointment booked!', 'অ্যাপয়েন্টমেন্ট বুক হয়েছে!')}
+        </div>
+        <div style={{ fontSize: 13, color: '#5A3E5F' }}>
+          {t("I'll remind you closer to the date.", 'তারিখের আগে আমি মনে করিয়ে দেব।')}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, zIndex: 60,
+      background: 'linear-gradient(180deg, #FFEFE2 0%, #F4D7E5 60%, #E0D5F0 100%)',
+      display: 'flex', flexDirection: 'column', overflow: 'hidden',
+    }}>
+      <Grain/>
+      <Tara ref={taraRef} size={0} mood="happy"/>
+
+      {/* Header */}
+      <div style={{ padding: '54px 22px 16px', display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <button onClick={onClose} style={window.uiBtns.iconBtn}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3D2840" strokeWidth="2" strokeLinecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: 'var(--display)', fontSize: 22, color: '#2A1A36', letterSpacing: '-0.01em', lineHeight: 1 }}>
+            {t('Book a checkup', 'চেকআপ বুক করুন')}
+          </div>
+          <div style={{ fontSize: 12, color: '#5A3E5F', marginTop: 4 }}>
+            {t('Choose a type, date, and time.', 'ধরন, তারিখ ও সময় বেছে নিন।')}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto', padding: '0 22px 28px' }}>
+        {/* Network error */}
+        {netError && (
+          <div style={{ background: '#FBD6CB', borderRadius: 14, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#7A2020', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span>⚠️</span> {netError}
+          </div>
+        )}
+
+        {/* Appointment type */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 700, marginBottom: 8, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            {t('Appointment type', 'অ্যাপয়েন্টমেন্টের ধরন')}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {APPT_TYPES.map(at => (
+              <button key={at.v} onClick={() => setApptType(at.v)} style={{
+                padding: '12px 10px', borderRadius: 16, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13,
+                background: apptType === at.v ? '#3D2840' : 'rgba(255,255,255,0.8)',
+                color:      apptType === at.v ? '#FFF1E4' : '#2A1A36',
+                boxShadow:  apptType === at.v ? '0 6px 16px -8px rgba(61,40,64,0.4)' : 'none',
+                transition: 'all 200ms',
+              }}>
+                {tlang === 'bn' ? at.bn : at.en}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Date */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 700, marginBottom: 8, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            📅 {t('Date', 'তারিখ')}
+          </div>
+          <input
+            type="date"
+            min={minDate}
+            value={date}
+            onChange={e => { setDate(e.target.value); setErrors(er => ({ ...er, date: '' })); }}
+            style={{ ...inputStyle, borderColor: errors.date ? '#C0392B' : 'rgba(61,40,64,0.14)' }}
+          />
+          {errors.date && <div style={{ fontSize: 11, color: '#C0392B', marginTop: 5 }}>{errors.date}</div>}
+        </div>
+
+        {/* Time */}
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 700, marginBottom: 8, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            🕐 {t('Time', 'সময়')}
+          </div>
+          <input
+            type="time"
+            value={time}
+            onChange={e => setTime(e.target.value)}
+            style={inputStyle}
+          />
+        </div>
+
+        {/* Location */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 700, marginBottom: 8, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            📍 {t('Location', 'স্থান')} <span style={{ opacity: 0.5, fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>({t('optional', 'ঐচ্ছিক')})</span>
+          </div>
+          <input
+            type="text"
+            placeholder={t('Hospital / Clinic name', 'হাসপাতাল / ক্লিনিকের নাম')}
+            value={location}
+            onChange={e => setLocation(e.target.value)}
+            maxLength={120}
+            style={inputStyle}
+          />
+        </div>
+
+        <button
+          onClick={handleBook}
+          disabled={saving}
+          style={{
+            width: '100%', padding: '16px', borderRadius: 99, border: 'none',
+            background: saving ? 'rgba(61,40,64,0.2)' : '#3D2840',
+            color: '#FFF1E4', fontSize: 15, fontWeight: 700,
+            cursor: saving ? 'not-allowed' : 'pointer',
+            boxShadow: saving ? 'none' : '0 14px 30px -10px rgba(61,40,64,0.5)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}
+        >
+          {saving
+            ? <><span style={{ opacity: 0.7 }}>⏳</span> {t('Booking…', 'বুক হচ্ছে…')}</>
+            : <><span>📅</span> {t('Confirm appointment', 'অ্যাপয়েন্টমেন্ট নিশ্চিত করুন')}</>
+          }
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Session Card ──────────────────────────────────────────────────────────────
 
 function SessionCard({ session, lang, onBegin, loading }) {
@@ -861,7 +1294,8 @@ function WellnessScreen({ state, setState, openScreen, wellnessMood, setWellness
 // ──────────────────────────────────────────────────────────────────
 function CareScreen({ state, setState, openScreen }) {
   const { iconBtn, primaryBtn, ghostBtn } = window.uiBtns;
-  const lang = state.lang;
+  const lang  = state.lang;
+  const tlang = (lang === 'bn' || lang === 'mixed') ? 'bn' : 'en';
   const L = (key, type) => window.tStr(key, lang, type);
 
   const [kicks, setKicks] = React.useState(0);
@@ -873,6 +1307,9 @@ function CareScreen({ state, setState, openScreen }) {
   const [appointments, setAppointments] = React.useState([]);
   const [healthLogs, setHealthLogs] = React.useState([]);
   const [fetchError, setFetchError] = React.useState(false);
+  const [showHealthLog, setShowHealthLog] = React.useState(false);
+  const [showBookAppt, setShowBookAppt] = React.useState(false);
+  const [rescheduleType, setRescheduleType] = React.useState(null);
 
   const _pid = () => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}').id || 'guest'; } catch { return 'guest'; } };
   const _tok = () => { try { return JSON.parse(localStorage.getItem('maya_session') || '{}').token || ''; } catch { return ''; } };
@@ -966,8 +1403,30 @@ function CareScreen({ state, setState, openScreen }) {
     .sort((a, b) => b.ts - a.ts).slice(0, 5)
     .map((ev, i) => ({ ...ev, cur: i === 0 }));
 
+  const _authTok = _tok();
+  const _patId   = _pid();
+
   return (
-    <div className="screen care">
+    <div className="screen care" style={{ position: 'relative' }}>
+      {showHealthLog && (
+        <HealthLogSheet
+          lang={lang}
+          patientId={_patId}
+          authToken={_authTok}
+          onClose={() => setShowHealthLog(false)}
+          onSaved={() => fetchCareData()}
+        />
+      )}
+      {showBookAppt && (
+        <BookAppointmentSheet
+          lang={lang}
+          patientId={_patId}
+          authToken={_authTok}
+          prefillType={rescheduleType || 'anc'}
+          onClose={() => { setShowBookAppt(false); setRescheduleType(null); }}
+          onSaved={() => fetchCareData()}
+        />
+      )}
       <div style={{ padding: '8px 22px 0' }}>
         <div style={{ fontSize: 12, fontWeight: 600, color: '#7A5E78', letterSpacing: '0.08em', textTransform: 'uppercase' }}>{L('careForBoth')}</div>
         <div style={{ fontFamily: 'var(--display)', fontSize: 28, color: '#2A1A36', marginTop: 4, letterSpacing: '-0.02em', lineHeight: 1.1 }}>
@@ -1007,15 +1466,35 @@ function CareScreen({ state, setState, openScreen }) {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <button style={{ ...primaryBtn, flex: 1 }}>Get directions</button>
-                <button style={{ ...primaryBtn, flex: 1, background: 'rgba(61,40,64,0.1)', color: '#3D2840' }}>Reschedule</button>
+                {nextAppt.location ? (
+                  <button
+                    onClick={() => window.open('https://maps.google.com/?q=' + encodeURIComponent(nextAppt.location), '_blank')}
+                    style={{ ...primaryBtn, flex: 1 }}
+                  >
+                    Get directions
+                  </button>
+                ) : (
+                  <button style={{ ...primaryBtn, flex: 1, opacity: 0.4, cursor: 'not-allowed' }} disabled>No location set</button>
+                )}
+                <button
+                  onClick={() => { setRescheduleType(nextAppt.appointment_type || 'anc'); setShowBookAppt(true); }}
+                  style={{ ...primaryBtn, flex: 1, background: 'rgba(61,40,64,0.1)', color: '#3D2840' }}
+                >
+                  Reschedule
+                </button>
               </div>
             </>
           ) : (
             <div style={{ textAlign: 'center', padding: '12px 0' }}>
               <div style={{ fontSize: 28, marginBottom: 8 }}>📅</div>
               <div style={{ fontFamily: 'var(--display)', fontSize: 16, color: '#3D2840' }}>No upcoming checkup</div>
-              <div style={{ fontSize: 12, color: '#7A5E78', marginTop: 4 }}>Ask Tara to schedule your next visit</div>
+              <div style={{ fontSize: 12, color: '#7A5E78', marginTop: 4, marginBottom: 14 }}>Book your next visit below</div>
+              <button
+                onClick={() => { setRescheduleType(null); setShowBookAppt(true); }}
+                style={{ ...primaryBtn, margin: '0 auto', display: 'inline-flex' }}
+              >
+                📅 {tlang === 'bn' ? 'চেকআপ বুক করুন' : 'Book a checkup'}
+              </button>
             </div>
           )}
         </Card>
@@ -1066,6 +1545,24 @@ function CareScreen({ state, setState, openScreen }) {
             </Card>
           ))}
         </div>
+      </div>
+
+      {/* Log readings button */}
+      <div style={{ padding: '10px 22px 0' }}>
+        <button
+          onClick={() => setShowHealthLog(true)}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            padding: '13px', borderRadius: 16, border: '1.5px dashed rgba(61,40,64,0.25)',
+            background: 'rgba(255,255,255,0.6)', color: '#3D2840',
+            fontSize: 13, fontWeight: 700, cursor: 'pointer', backdropFilter: 'blur(8px)',
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3D2840" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>
+          </svg>
+          {tlang === 'bn' ? 'আজকের রিডিং লগ করুন' : "Log today's readings"}
+        </button>
       </div>
 
       <div style={{ padding: '16px 22px 0' }}>

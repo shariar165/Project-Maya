@@ -923,6 +923,7 @@ function RiskScreen({ state, setState, openScreen }) {
   const [taraMsg, setTaraMsg] = React.useState(null);
   const [apiError, setApiError] = React.useState(false);
   const [vitals, setVitals] = React.useState({ bp: null, sleep: null });
+  const [backendLevel, setBackendLevel] = React.useState(null);
 
   React.useEffect(() => {
     const patientId = (() => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}').id || null; } catch { return null; } })();
@@ -943,7 +944,8 @@ function RiskScreen({ state, setState, openScreen }) {
   }, []);
 
   const score = Object.entries(sel).reduce((acc, [k, on]) => acc + (on ? SYMPTOMS.find(s => s.k === k).w : 0), 0);
-  const level = score === 0 ? 'safe' : score <= 3 ? 'low' : score <= 7 ? 'moderate' : 'high';
+  const previewLevel = score === 0 ? 'safe' : score <= 3 ? 'low' : score <= 7 ? 'moderate' : 'high';
+  const level = (submitted && backendLevel) ? backendLevel : previewLevel;
   const levelMap = {
     safe:     { label: L('riskLabelSafe'),     tone: 'linear-gradient(135deg, #E6F1DC, #DDEEFF)', dot: '#7BC894', taraMood: 'happy',   msg: L('riskSafe', 'tara') },
     low:      { label: L('riskLabelLow'),      tone: 'linear-gradient(135deg, #F2EBDA, #FBE5D6)', dot: '#E5A064', taraMood: 'idle',    msg: L('riskLow', 'tara') },
@@ -953,27 +955,44 @@ function RiskScreen({ state, setState, openScreen }) {
   const lvl = levelMap[level];
 
   const toggle = (k) => setSel(s => ({ ...s, [k]: !s[k] }));
-  const reset = () => { setSel({}); setSubmitted(false); setTaraMsg(null); setApiError(false); };
+  const reset = () => { setSel({}); setSubmitted(false); setTaraMsg(null); setApiError(false); setBackendLevel(null); };
 
   const analyse = async () => {
-    const selectedSymNames = Object.entries(sel).filter(([, on]) => on).map(([k]) => L(SYMPTOMS.find(s => s.k === k).lKey));
-    const msgText = `আমার আজ এই লক্ষণগুলো আছে: ${selectedSymNames.join(', ')}। রিস্ক স্কোর: ${score}`;
+    const selectedSymKeys  = Object.entries(sel).filter(([, on]) => on).map(([k]) => k);
+    const selectedSymNames = selectedSymKeys.map(k => L(SYMPTOMS.find(s => s.k === k).lKey));
     const patientId = (() => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}').id || 'guest'; } catch { return 'guest'; } })();
     const token = (() => { try { return JSON.parse(localStorage.getItem('maya_session') || '{}').token || ''; } catch { return ''; } })();
     setLoading(true);
     setApiError(false);
     try {
+      // Step 1: backend computes authoritative risk level + logs symptoms
+      let finalLevel = previewLevel;
+      try {
+        const riskRes = await fetch(`${window.BACKEND_URL}/risk-score`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(token ? { 'Authorization': `Bearer ${token}` } : {}) },
+          body: JSON.stringify({ patient_id: patientId, symptoms: selectedSymKeys }),
+        });
+        if (riskRes.ok) {
+          const riskData = await riskRes.json();
+          finalLevel = riskData.level || previewLevel;
+        }
+      } catch {}
+      setBackendLevel(finalLevel);
+
+      // Step 2: get Tara's AI response
+      const msgText = `আমার আজ এই লক্ষণগুলো আছে: ${selectedSymNames.join(', ')}। রিস্ক স্তর: ${finalLevel}`;
       const res = await fetch(`${window.BACKEND_URL}/ask`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ patient_id: patientId, message: msgText, source: 'risk_screen' }),
       });
       const data = await res.json();
-      setTaraMsg(data.message || data.voice_text || lvl.msg);
+      setTaraMsg(data.message || data.voice_text || levelMap[finalLevel].msg);
       setSubmitted(true);
     } catch (_) {
       setApiError(true);
-      setTaraMsg(lvl.msg);
+      setTaraMsg(levelMap[backendLevel || previewLevel].msg);
       setSubmitted(true);
     } finally {
       setLoading(false);

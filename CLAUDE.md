@@ -6,11 +6,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Frontend:** Open `Maya.html` in a browser. No build step, no npm, no bundler. React 18 and Babel standalone are loaded from CDN; all `.jsx` files are transpiled in-browser at runtime.
 
+**Infrastructure (local dev — run once):**
+```
+cd maya-backend
+docker compose up -d          # starts PostgreSQL on 5433 + Redis on 6379
+```
+
 **Backend:**
 ```
 cd maya-backend
 python -m venv venv && venv\Scripts\activate   # Windows
-pip install -r requirements.txt                 # if available; else install from imports
+pip install -r requirements.txt
 python main.py                                  # FastAPI on port 8000
 ```
 
@@ -30,7 +36,16 @@ python ingest_all.py
 ANTHROPIC_API_KEY=
 GEMINI_API_KEY=
 GROQ_API_KEY=
-DATABASE_URL=sqlite:///./maya.db
+# PostgreSQL via Docker Compose (port 5433 — see Windows notes)
+DATABASE_URL=postgresql://maya:maya_dev_password@127.0.0.1:5433/mayadb
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=change-this-to-a-random-32-char-secret
+# SMTP — leave SMTP_USER empty for console fallback in dev
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=
+SMTP_PASSWORD=
+EMAIL_FROM=Maya Health <noreply@maya-health.com>
 MCP_API_KEY=maya-mcp-secret-key-change-in-production
 # Optional — TTS waterfall (see TTS section below)
 GOOGLE_TTS_API_KEY=
@@ -46,7 +61,7 @@ TARA_VOICE_ID=9BWtsMINqrJLrRacOk9x
 1. `ios-frame.jsx` — iOS frame, status bar, keyboard components
 2. `tweaks-panel.jsx` — live-editing panel + `useTweaks` hook
 3. `strings.jsx` — plain-JS localization (no JSX); must load before any screen
-4. `auth.jsx` — `AuthScreen`, `OTPScreen`, `RegisterScreen`; uses `localStorage` for session/user
+4. `auth.jsx` — `AuthScreen`, `OTPScreen`, `RegisterScreen`, `ForgotPasswordScreen`; helpers `saveTokens`, `refreshTokens`, `saveUser` on `window.*`
 5. `tara.jsx` — Tara companion character (video-based, emotion-driven)
 6. `home.jsx` — shared UI primitives (`Card`, `Pill`, `MeshBg`, `Grain`, `WeekRing`, `Waveform`) + `HomeScreen`
 7. `screens-1.jsx` — `JourneyScreen`, `ChatScreen`, `VoiceScreen`
@@ -99,7 +114,7 @@ POST /ask → classify_intent (orchestrator.py)
 
 **RAG pipeline:** ChromaDB (`./chroma_db`) with hybrid BM25 + vector search + Reciprocal Rank Fusion, then BGE reranking (`rag/retriever.py`). Source PDFs live in `maya-backend/docs/raw/`.
 
-**Database:** SQLite by default (`maya.db`), SQLAlchemy ORM. Models: `Patient`, `AuthSession`, `HealthLog`, `Conversation`, `Appointment`, `ProactiveMessage`, `PatientBaseline`, `EmergencyLog`, `Reminder`, `IngestionLog`, `WellnessSession`. Always access ORM attributes inside the `with get_db() as db:` context — extracting primitives before the block closes to avoid `DetachedInstanceError`.
+**Database:** PostgreSQL (local dev via Docker Compose, port 5433). SQLAlchemy ORM. Models: `Patient`, `Session`, `AuthSession` (legacy), `HealthLog`, `Conversation`, `Appointment`, `ProactiveMessage`, `PatientBaseline`, `EmergencyLog`, `Reminder`, `IngestionLog`, `WellnessSession`. Always access ORM attributes inside the `with get_db() as db:` context — extracting primitives before the block closes to avoid `DetachedInstanceError`.
 
 **Scheduled jobs** (APScheduler, started in `lifespan`):
 - `scan_all_patients` — every 6 hours (proactive health monitoring)
@@ -122,6 +137,18 @@ POST /ask → classify_intent (orchestrator.py)
 - Sessions are JSON files in `content/sessions/` with fields: `id`, `category`, `allowed_trimesters`, `contraindications`, `steps`.
 - API: `GET /wellness/recommend?patient_id=&mood=`, `GET /wellness/sessions`, `POST /wellness/sessions/complete`. Completion is recorded in the `WellnessSession` DB table.
 
+**Auth module** (`auth/`): Email + password authentication with JWT tokens and email OTP verification.
+- `auth/router.py` — 8 endpoints mounted at `/auth/*`: `register`, `verify-email`, `resend-verification`, `login`, `refresh`, `logout`, `forgot-password`, `reset-password`
+- `auth/password.py` — bcrypt hashing (12 rounds)
+- `auth/token.py` — PyJWT HS256; access token 15 min, refresh token 30 days; `verify_access_token()` raises HTTP 401 automatically (used by protected endpoints in `main.py`)
+- `auth/otp.py` — Redis-backed 6-digit OTP (SHA-256 hashed, 5-attempt limit, 5 min TTL); key pattern `otp:{email}:{purpose}`
+- `auth/email_service.py` — SMTP via `smtplib` + STARTTLS; falls back to console print when `SMTP_USER` is empty
+- `auth/limiter.py` — slowapi `Limiter` instance shared across auth endpoints
+- **Session model** (`db/models.py`): tracks `refresh_jti` + `refresh_hash` per session; on refresh, old session is revoked and a new one created (token rotation); on JTI mismatch, all sessions for that patient are revoked (theft detection)
+- **Token storage** (frontend): `localStorage.maya_access_token` (JWT), `localStorage.maya_refresh_token`, `localStorage.maya_session` (JSON envelope). Old `localStorage.maya_session.token` pattern preserved for backward compat. Use `window.refreshTokens()` to rotate silently.
+- **Login flow:** `AuthScreen` (email + password, login/register tabs) → on register: `RegisterScreen` (name → week → lang, then `POST /auth/register`) → `OTPScreen` (email OTP, `POST /auth/verify-email`) → home. Forgot password: `ForgotPasswordScreen` (email → OTP → new password).
+- `AuthSession` model kept as dead legacy; no longer written to.
+
 **MCP servers** expose ChromaDB and patient DB as HTTP tool endpoints for direct Claude API calls.
 
 **n8n workflows** (`maya-backend/n8n/workflows/`) handle document ingestion, daily reminders, emergency alerts, weekly reports, and missed-appointment follow-ups.
@@ -133,3 +160,5 @@ Design handoff bundle from Claude Design — original prototype + chat transcrip
 ## Windows-specific notes
 
 - `main.py` reconfigures `sys.stdout`/`sys.stderr` to UTF-8 at startup to avoid `OSError` when printing Bangla text in a thread pool. Use `logging` instead of `print()` in agent/tool code that runs in LangGraph threads.
+- Native PostgreSQL on this machine owns port 5432. Docker Compose maps the container to **5433** (`5433:5432`). Always use `DATABASE_URL=postgresql://...@127.0.0.1:5433/mayadb` — never port 5432, which hits the native instance and will fail auth.
+- Start uvicorn **without** `--reload` (`python main.py` directly) — watchfiles triggers a continuous reload loop on Windows due to `.pyc` churn.

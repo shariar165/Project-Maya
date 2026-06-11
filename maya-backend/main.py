@@ -143,6 +143,32 @@ class WellnessCompleteRequest(BaseModel):
     mood_after:          Optional[str] = None
 
 
+class RiskScoreRequest(BaseModel):
+    patient_id: str
+    symptoms:   list = []   # list of symptom keys e.g. ["headache", "swelling"]
+
+
+class CreateAppointmentRequest(BaseModel):
+    patient_id:       str
+    appointment_type: str = "anc"   # anc | ultrasound | followup | general
+    scheduled_at:     str           # ISO-8601 datetime string e.g. "2026-06-15T09:00:00"
+    location:         Optional[str] = None
+
+
+_SYMPTOM_WEIGHTS: dict = {
+    "headache": 2,
+    "swelling": 4,
+    "vision":   4,
+    "bleeding": 5,
+    "pain":     4,
+    "fever":    3,
+    "kicks":    3,
+    "nausea":   2,
+    "breath":   4,
+    "mood":     3,
+}
+
+
 # ── Profile endpoints ────────────────────────────────────────────────────────
 
 @app.get("/profile/{patient_id}")
@@ -413,6 +439,49 @@ async def health_log(req: HealthLogRequest):
     return {"status": "logged", "detail": result}
 
 
+@app.post("/risk-score")
+async def risk_score(
+    req: RiskScoreRequest,
+    authorization: Optional[str] = Header(None),
+):
+    """Compute symptom-based risk level server-side, optionally elevate via ML model,
+    and log each symptom to health_logs for future monitoring."""
+    is_guest = req.patient_id in ("guest", "", None)
+    if not is_guest:
+        if not authorization or not authorization.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Missing Authorization header")
+        verify_access_token(authorization.split(" ", 1)[1])
+
+    score = sum(_SYMPTOM_WEIGHTS.get(str(s), 0) for s in req.symptoms)
+    if score == 0:
+        level = "safe"
+    elif score <= 3:
+        level = "low"
+    elif score <= 7:
+        level = "moderate"
+    else:
+        level = "high"
+
+    ml_score = None
+    if not is_guest:
+        from tools.risk_tool import calculate_risk_score
+        from tools.patient_tool import log_health_data
+        try:
+            ml_score = calculate_risk_score(req.patient_id)
+            # ML model signals high risk even if symptom weight is borderline
+            if ml_score is not None and ml_score > 0.7 and level in ("safe", "low"):
+                level = "moderate"
+        except Exception:
+            pass
+        for sym in req.symptoms:
+            try:
+                log_health_data(req.patient_id, "symptom", str(sym))
+            except Exception:
+                pass
+
+    return {"score": score, "level": level, "ml_score": ml_score}
+
+
 @app.get("/appointments/{patient_id}")
 async def get_appointments(patient_id: str, limit: int = 20):
     """Return appointments for a patient sorted by scheduled_at ascending."""
@@ -434,6 +503,58 @@ async def get_appointments(patient_id: str, limit: int = 20):
             }
             for a in appts
         ]
+
+
+@app.post("/appointments")
+async def create_appointment(
+    req: CreateAppointmentRequest,
+    authorization: Optional[str] = Header(None),
+):
+    """Book a new appointment for a patient."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    verify_access_token(authorization.split(" ", 1)[1])
+
+    allowed_types = {"anc", "ultrasound", "followup", "general"}
+    if req.appointment_type not in allowed_types:
+        raise HTTPException(status_code=422, detail=f"appointment_type must be one of: {', '.join(allowed_types)}")
+
+    try:
+        scheduled_dt = datetime.fromisoformat(req.scheduled_at)
+    except ValueError:
+        raise HTTPException(status_code=422, detail="scheduled_at must be a valid ISO-8601 datetime (e.g. 2026-06-15T09:00:00)")
+
+    if scheduled_dt <= datetime.utcnow():
+        raise HTTPException(status_code=400, detail="Appointment must be scheduled in the future")
+
+    import uuid as _uuid
+    with get_db() as db:
+        patient = db.query(Patient).filter(Patient.id == req.patient_id).first()
+        if not patient:
+            raise HTTPException(status_code=404, detail="Patient not found")
+
+        appt = Appointment(
+            id=str(_uuid.uuid4()),
+            patient_id=req.patient_id,
+            appointment_type=req.appointment_type,
+            scheduled_at=scheduled_dt,
+            location=req.location,
+            attended=False,
+            escalated=False,
+        )
+        db.add(appt)
+        appt_id = appt.id
+        appt_type = appt.appointment_type
+        appt_at = appt.scheduled_at.isoformat()
+        appt_loc = appt.location
+
+    return {
+        "id":               appt_id,
+        "appointment_type": appt_type,
+        "scheduled_at":     appt_at,
+        "location":         appt_loc,
+        "attended":         False,
+    }
 
 
 @app.get("/health-logs/{patient_id}")
