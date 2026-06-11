@@ -760,23 +760,13 @@ async def health():
 
 @app.get("/debug/email")
 async def debug_email(to: str = "delivered@resend.dev"):
-    """Temporary: test Resend send to a given address and return full response."""
-    import os
-    resend_key = os.getenv("RESEND_API_KEY", "")
-    if not resend_key:
-        return {"error": "RESEND_API_KEY not set"}
-    try:
-        import httpx
-        async with httpx.AsyncClient(timeout=15) as c:
-            r = await c.post(
-                "https://api.resend.com/emails",
-                headers={"Authorization": f"Bearer {resend_key}", "Content-Type": "application/json"},
-                json={"from": "Maya Health <onboarding@resend.dev>",
-                      "to": [to], "subject": "Maya debug test", "html": "<p>test</p>"},
-            )
-        return {"status": r.status_code, "body": r.text, "to": to}
-    except Exception as e:
-        return {"error": str(e)}
+    """Temporary: test active email provider by sending to given address."""
+    from auth.email_service import _send
+    sent = await _send(to, "Maya debug test", "<p>test email from Maya</p>")
+    return {"sent": sent, "to": to,
+            "provider": "brevo" if os.getenv("BREVO_API_KEY") else
+                        "resend" if os.getenv("RESEND_API_KEY") else
+                        "smtp"   if os.getenv("SMTP_USER") else "console"}
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

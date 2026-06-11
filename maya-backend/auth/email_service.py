@@ -11,25 +11,47 @@ log = logging.getLogger("maya.email")
 
 
 async def _send(to_email: str, subject: str, html: str) -> bool:
+    brevo_key  = os.getenv("BREVO_API_KEY", "")
     resend_key = os.getenv("RESEND_API_KEY", "")
     smtp_user  = os.getenv("SMTP_USER", "")
 
-    # ── Resend API (preferred — works on Railway) ────────────────────────────
+    # ── Brevo (Sendinblue) — free 300/day, no domain verification needed ─────
+    # Only a verified sender *email* is required (verify once in Brevo dashboard)
+    if brevo_key:
+        sender_email = os.getenv("BREVO_SENDER_EMAIL", os.getenv("SMTP_USER", ""))
+        sender_name  = "Maya Health"
+        if not sender_email:
+            log.error("[Email/Brevo] BREVO_SENDER_EMAIL not set")
+        else:
+            try:
+                async with httpx.AsyncClient(timeout=15) as client:
+                    res = await client.post(
+                        "https://api.brevo.com/v3/smtp/email",
+                        headers={"api-key": brevo_key, "Content-Type": "application/json"},
+                        json={
+                            "sender":      {"name": sender_name, "email": sender_email},
+                            "to":          [{"email": to_email}],
+                            "subject":     subject,
+                            "htmlContent": html,
+                        },
+                    )
+                if res.status_code in (200, 201):
+                    return True
+                log.error("[Email/Brevo] Failed %s: %s", res.status_code, res.text)
+                return False
+            except Exception as e:
+                log.error("[Email/Brevo] Exception: %s", e)
+                return False
+
+    # ── Resend API (requires verified domain for sending to all recipients) ──
     if resend_key:
-        from_addr = os.getenv("EMAIL_FROM", "Maya Health <onboarding@resend.dev>")
-        # Resend requires a verified domain for custom from-address;
-        # fall back to their sandbox address on free plan.
-        if "resend.dev" not in from_addr and not os.getenv("RESEND_DOMAIN_VERIFIED", ""):
-            from_addr = "Maya Health <onboarding@resend.dev>"
         try:
             async with httpx.AsyncClient(timeout=15) as client:
                 res = await client.post(
                     "https://api.resend.com/emails",
-                    headers={
-                        "Authorization": f"Bearer {resend_key}",
-                        "Content-Type": "application/json",
-                    },
-                    json={"from": from_addr, "to": [to_email], "subject": subject, "html": html},
+                    headers={"Authorization": f"Bearer {resend_key}", "Content-Type": "application/json"},
+                    json={"from": "Maya Health <onboarding@resend.dev>",
+                          "to": [to_email], "subject": subject, "html": html},
                 )
             if res.status_code in (200, 201):
                 return True
