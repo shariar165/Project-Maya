@@ -271,6 +271,19 @@ function ProfileEditModal({ profile, lang, L, saving, saveError, onSave, onCance
           <input style={inputStyle} type="tel" value={draft.guardianPhone || ''} onChange={e => set('guardianPhone', e.target.value)} maxLength={20}/>
         </div>
 
+        <div>
+          <label style={labelStyle}>{L('fieldDoctorName')}</label>
+          <input style={inputStyle} placeholder={lang === 'bn' ? 'ডাক্তারের নাম' : "e.g. Dr. Rahman"} value={draft.doctorName || ''} onChange={e => set('doctorName', e.target.value)} maxLength={80}/>
+        </div>
+
+        <div>
+          <label style={labelStyle}>{L('fieldDoctorEmail')}</label>
+          <input style={inputStyle} type="email" placeholder="doctor@example.com" value={draft.doctorEmail || ''} onChange={e => set('doctorEmail', e.target.value)} maxLength={120}/>
+          <div style={{ fontSize: 10, color: '#7A5E78', marginTop: 4, lineHeight: 1.5 }}>
+            {lang === 'bn' ? 'তারা ঝুঁকি শনাক্ত করলে এই ঠিকানায় ইমেইল পাঠাবে।' : 'Tara will email this address when danger is detected.'}
+          </div>
+        </div>
+
         {saveError && (
           <div style={{ fontSize: 12, color: '#C0392B', textAlign: 'center' }}>{saveError}</div>
         )}
@@ -308,6 +321,8 @@ function ProfileScreen({ state, setState, openScreen, tweak, setTweak, onLogout 
     isFirstPregnancy: storedUser?.isFirstPregnancy ?? null,
     guardianName:     storedUser?.guardianName     ?? null,
     guardianPhone:    storedUser?.guardianPhone    ?? null,
+    doctorName:       storedUser?.doctorName       ?? null,
+    doctorEmail:      storedUser?.doctorEmail      ?? null,
     lastWeight:       storedUser?.lastWeight       ?? null,
     lastBpReading:    storedUser?.lastBpReading    ?? null,
   });
@@ -400,6 +415,8 @@ function ProfileScreen({ state, setState, openScreen, tweak, setTweak, onLogout 
           is_first_pregnancy: draft.isFirstPregnancy,
           guardian_name:      draft.guardianName,
           guardian_phone:     draft.guardianPhone,
+          doctor_name:        draft.doctorName,
+          doctor_email:       draft.doctorEmail,
         }),
         signal: controller.signal,
       });
@@ -561,36 +578,59 @@ function ProfileScreen({ state, setState, openScreen, tweak, setTweak, onLogout 
         </div>
       )}
 
-      {/* care circle — only shown when guardian data exists */}
-      {(profile.guardianName || profile.guardianPhone) && (
+      {/* care circle — guardian + doctor */}
+      {(profile.guardianName || profile.guardianPhone || profile.doctorEmail) && (
         <div style={{ padding: '16px 22px 0' }}>
           <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', marginBottom: 8, letterSpacing: '-0.01em' }}>
             {L('careCircle')}
           </div>
           <Card style={{ padding: 0 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px' }}>
-              <div style={{
-                width: 38, height: 38, borderRadius: '50%', background: '#E0D5F0',
-                display: 'grid', placeItems: 'center', fontWeight: 700,
-                color: '#3D2840', fontFamily: 'var(--display)', fontSize: 18,
-              }}>
-                {profile.guardianName ? profile.guardianName.slice(0,1).toUpperCase() : '?'}
+            {(profile.guardianName || profile.guardianPhone) && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: profile.doctorEmail ? '1px solid rgba(61,40,64,0.06)' : 'none' }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: '50%', background: '#E0D5F0',
+                  display: 'grid', placeItems: 'center', fontWeight: 700,
+                  color: '#3D2840', fontFamily: 'var(--display)', fontSize: 18,
+                }}>
+                  {profile.guardianName ? profile.guardianName.slice(0,1).toUpperCase() : '?'}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, color: '#2A1A36', fontWeight: 600 }}>{profile.guardianName || 'Guardian'}</div>
+                  <div style={{ fontSize: 11, color: '#7A5E78' }}>Emergency contact</div>
+                </div>
+                {profile.guardianPhone && (
+                  <a href={`tel:${profile.guardianPhone}`} style={{
+                    width: 32, height: 32, borderRadius: 99, border: 'none', background: '#F4ECE0',
+                    display: 'grid', placeItems: 'center', cursor: 'pointer', textDecoration: 'none',
+                  }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3D2840" strokeWidth="2" strokeLinecap="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
+                    </svg>
+                  </a>
+                )}
               </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontSize: 14, color: '#2A1A36', fontWeight: 600 }}>{profile.guardianName || 'Guardian'}</div>
-                <div style={{ fontSize: 11, color: '#7A5E78' }}>Emergency contact</div>
-              </div>
-              {profile.guardianPhone && (
-                <a href={`tel:${profile.guardianPhone}`} style={{
+            )}
+            {profile.doctorEmail && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px' }}>
+                <div style={{
+                  width: 38, height: 38, borderRadius: '50%', background: '#EBF5FF',
+                  display: 'grid', placeItems: 'center', fontSize: 20,
+                }}>👨‍⚕️</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, color: '#2A1A36', fontWeight: 600 }}>{profile.doctorName || profile.doctorEmail}</div>
+                  {profile.doctorName && <div style={{ fontSize: 11, color: '#7A5E78', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profile.doctorEmail}</div>}
+                  <div style={{ fontSize: 10, color: '#9A8595', marginTop: 1 }}>
+                    {lang === 'bn' ? 'তারা বিপদে ইমেইল পাঠাবে' : 'Tara will email on danger'}
+                  </div>
+                </div>
+                <a href={`mailto:${profile.doctorEmail}`} style={{
                   width: 32, height: 32, borderRadius: 99, border: 'none', background: '#F4ECE0',
                   display: 'grid', placeItems: 'center', cursor: 'pointer', textDecoration: 'none',
                 }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3D2840" strokeWidth="2" strokeLinecap="round">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>
-                  </svg>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3D2840" strokeWidth="2" strokeLinecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
                 </a>
-              )}
-            </div>
+              </div>
+            )}
           </Card>
         </div>
       )}
@@ -924,6 +964,8 @@ function RiskScreen({ state, setState, openScreen }) {
   const [apiError, setApiError] = React.useState(false);
   const [vitals, setVitals] = React.useState({ bp: null, sleep: null, hydration: null });
   const [backendLevel, setBackendLevel] = React.useState(null);
+  const [doctorAlerted, setDoctorAlerted] = React.useState(false);
+  const [alertingDoctor, setAlertingDoctor] = React.useState(false);
 
   React.useEffect(() => {
     const patientId = (() => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}').id || null; } catch { return null; } })();
@@ -958,7 +1000,25 @@ function RiskScreen({ state, setState, openScreen }) {
   const lvl = levelMap[level];
 
   const toggle = (k) => setSel(s => ({ ...s, [k]: !s[k] }));
-  const reset = () => { setSel({}); setSubmitted(false); setTaraMsg(null); setApiError(false); setBackendLevel(null); };
+  const reset = () => { setSel({}); setSubmitted(false); setTaraMsg(null); setApiError(false); setBackendLevel(null); setDoctorAlerted(false); };
+
+  const alertMyDoctor = async (symptoms, level) => {
+    const pid = (() => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}').id || ''; } catch { return ''; } })();
+    const tok = (() => { try { return JSON.parse(localStorage.getItem('maya_session') || '{}').token || ''; } catch { return ''; } })();
+    if (!pid || !tok || pid === 'guest') return;
+    setAlertingDoctor(true);
+    try {
+      const res = await fetch(`${window.BACKEND_URL}/doctor/alert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tok}` },
+        body: JSON.stringify({ patient_id: pid, trigger: 'risk', symptoms, level }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.sent) { setDoctorAlerted(true); setTimeout(() => setDoctorAlerted(false), 6000); }
+      }
+    } catch {} finally { setAlertingDoctor(false); }
+  };
 
   const analyse = async () => {
     const selectedSymKeys  = Object.entries(sel).filter(([, on]) => on).map(([k]) => k);
@@ -993,6 +1053,11 @@ function RiskScreen({ state, setState, openScreen }) {
       const data = await res.json();
       setTaraMsg(data.message || data.voice_text || levelMap[finalLevel].msg);
       setSubmitted(true);
+
+      // Auto-alert doctor on high risk
+      if (finalLevel === 'high' && patientId !== 'guest') {
+        alertMyDoctor(selectedSymNames, finalLevel);
+      }
     } catch (_) {
       setApiError(true);
       setTaraMsg(levelMap[backendLevel || previewLevel].msg);
@@ -1146,10 +1211,20 @@ function RiskScreen({ state, setState, openScreen }) {
             <div style={{ fontFamily: 'var(--display)', fontSize: 17, lineHeight: 1.4, letterSpacing: '-0.01em' }}>
               "{taraMsg}"
             </div>
-            <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-              <button onClick={() => openScreen('chat')} style={{ ...primaryBtn, background: '#F08A6E', flex: 1 }}>
+            <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+              <button onClick={() => openScreen('chat')} style={{ ...primaryBtn, background: '#F08A6E', flex: 1, minWidth: 100 }}>
                 {level === 'high' ? ('☎️ ' + L('callDoctor')) : ('💬 ' + (lang === 'bn' ? 'ডাক্তারকে বলুন' : 'Tell my doctor'))}
               </button>
+              {level === 'moderate' && !doctorAlerted && (
+                <button onClick={() => alertMyDoctor(Object.entries(sel).filter(([,on]) => on).map(([k]) => L(SYMPTOMS.find(s => s.k === k).lKey)), level)} disabled={alertingDoctor} style={{ ...primaryBtn, background: 'rgba(255,200,100,0.25)', color: '#FFF1E4', flex: 1, minWidth: 100 }}>
+                  {alertingDoctor ? '⏳' : '🔔 ' + L('alertDoctor')}
+                </button>
+              )}
+              {doctorAlerted && (
+                <div style={{ flex: 1, minWidth: 100, padding: '10px 12px', borderRadius: 12, background: 'rgba(39,174,96,0.3)', color: '#7FEFAB', fontSize: 13, fontWeight: 600, textAlign: 'center' }}>
+                  ✓ {L('doctorAlerted')}
+                </div>
+              )}
               <button onClick={() => {
                 setState(s => ({ ...s, riskContext: {
                   symptoms: Object.entries(sel).filter(([, on]) => on).map(([k]) => L(SYMPTOMS.find(sym => sym.k === k).lKey)),
@@ -1158,7 +1233,7 @@ function RiskScreen({ state, setState, openScreen }) {
                   taraAnalysis: taraMsg,
                 }}));
                 openScreen('chat');
-              }} style={{ ...primaryBtn, background: 'rgba(255,241,228,0.15)', color: '#FFF1E4', flex: 1 }}>
+              }} style={{ ...primaryBtn, background: 'rgba(255,241,228,0.15)', color: '#FFF1E4', flex: 1, minWidth: 100 }}>
                 {lang === 'bn' ? 'তারার সাথে কথা বলুন' : 'Talk to Tara'}
               </button>
             </div>

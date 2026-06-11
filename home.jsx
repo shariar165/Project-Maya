@@ -540,6 +540,11 @@ function HomeScreen({ state, setState, openScreen }) {
         </Card>
       </div>
 
+      {/* Doctor card */}
+      <div style={{ padding: '12px 22px 0' }}>
+        <DoctorCard lang={lang} />
+      </div>
+
       {/* upcoming appointment */}
       <div style={{ padding: '14px 22px 20px' }}>
         <Card>
@@ -643,7 +648,152 @@ const WEEK_FRUITS = (() => {
   return out;
 })();
 
+// ──────────────────────────────────────────────────────────────────
+// DOCTOR CARD — shared across HomeScreen, CareScreen
+// ──────────────────────────────────────────────────────────────────
+function DoctorCard({ lang }) {
+  const L = (key) => window.tStr(key, lang, 'ui');
+  const _pid = () => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}').id || ''; } catch { return ''; } };
+  const _tok = () => { try { return JSON.parse(localStorage.getItem('maya_session') || '{}').token || ''; } catch { return ''; } };
+  const _isAuth = () => { const p = _pid(); const t = _tok(); return !!(p && t); };
+  const _validEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+  const [doctor, setDoctor] = React.useState(() => {
+    try { const u = JSON.parse(localStorage.getItem('maya_user') || '{}');
+          return { name: u.doctorName || '', email: u.doctorEmail || '' }; }
+    catch { return { name: '', email: '' }; }
+  });
+  const [editing, setEditing] = React.useState(false);
+  const [draft, setDraft] = React.useState({ name: '', email: '' });
+  const [saving, setSaving] = React.useState(false);
+  const [saveError, setSaveError] = React.useState('');
+  const [alertSent, setAlertSent] = React.useState(false);
+  const [alertError, setAlertError] = React.useState(false);
+  const [alerting, setAlerting] = React.useState(false);
+
+  const startEdit = () => { setDraft({ name: doctor.name, email: doctor.email }); setSaveError(''); setEditing(true); };
+
+  const save = async () => {
+    if (!_validEmail(draft.email)) { setSaveError(lang === 'bn' ? 'সঠিক ইমেইল দিন' : 'Enter a valid email'); return; }
+    const pid = _pid(); const tok = _tok();
+    if (!pid || !tok) { setSaveError(lang === 'bn' ? 'লগ ইন করুন' : 'Please log in first'); return; }
+    setSaving(true); setSaveError('');
+    try {
+      const res = await fetch(`${window.BACKEND_URL}/profile/${pid}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tok}` },
+        body: JSON.stringify({ doctor_name: draft.name, doctor_email: draft.email }),
+      });
+      if (res.ok) {
+        setDoctor({ name: draft.name, email: draft.email });
+        try {
+          const u = JSON.parse(localStorage.getItem('maya_user') || '{}');
+          u.doctorName = draft.name; u.doctorEmail = draft.email;
+          localStorage.setItem('maya_user', JSON.stringify(u));
+        } catch {}
+        setEditing(false);
+      } else {
+        setSaveError(lang === 'bn' ? 'সেভ হয়নি। আবার চেষ্টা করুন।' : 'Could not save. Try again.');
+      }
+    } catch {
+      setSaveError(lang === 'bn' ? 'সংযোগ সমস্যা। আবার চেষ্টা করুন।' : 'Connection error. Try again.');
+    } finally { setSaving(false); }
+  };
+
+  const alertDoctor = async (trigger = 'manual') => {
+    if (!doctor.email) return;
+    const pid = _pid(); const tok = _tok();
+    if (!pid || !tok) return;
+    setAlerting(true); setAlertError(false);
+    try {
+      const res = await fetch(`${window.BACKEND_URL}/doctor/alert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${tok}` },
+        body: JSON.stringify({ patient_id: pid, trigger }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.sent) {
+          setAlertSent(true);
+          setTimeout(() => setAlertSent(false), 5000);
+        } else {
+          setAlertError(true);
+          setTimeout(() => setAlertError(false), 4000);
+        }
+      } else {
+        setAlertError(true);
+        setTimeout(() => setAlertError(false), 4000);
+      }
+    } catch {
+      setAlertError(true);
+      setTimeout(() => setAlertError(false), 4000);
+    } finally { setAlerting(false); }
+  };
+
+  const inputStyle = {
+    width: '100%', padding: '10px 14px', borderRadius: 12, border: '1.5px solid rgba(61,40,64,0.15)',
+    fontSize: 14, color: '#2A1A36', background: '#FAFAFA', outline: 'none', boxSizing: 'border-box',
+  };
+  const canSave = _validEmail(draft.email) && !saving;
+
+  return (
+    <Card style={{ padding: '14px 16px' }}>
+      {!editing ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 40, height: 40, borderRadius: 14, background: doctor.email ? '#EBF5FF' : '#F0E8F5', display: 'grid', placeItems: 'center', fontSize: 20, flexShrink: 0 }}>
+            {doctor.email ? '👨‍⚕️' : '➕'}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 11, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>{L('doctorCardTitle')}</div>
+            {doctor.email ? (
+              <div>
+                <div style={{ fontSize: 14, color: '#2A1A36', fontWeight: 600, marginTop: 1 }}>{doctor.name || doctor.email}</div>
+                {doctor.name && <div style={{ fontSize: 11, color: '#7A5E78', marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doctor.email}</div>}
+                {alertError && <div style={{ fontSize: 11, color: '#E74C3C', marginTop: 2 }}>{lang === 'bn' ? 'পাঠানো যায়নি' : 'Could not send'}</div>}
+              </div>
+            ) : (
+              <div style={{ fontSize: 13, color: '#9A8595', marginTop: 2, lineHeight: 1.4 }}>{L('addDoctorPrompt')}</div>
+            )}
+          </div>
+          {doctor.email ? (
+            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+              <button onClick={() => alertDoctor()} disabled={alerting || alertSent} style={{
+                padding: '7px 12px', borderRadius: 99, border: 'none',
+                background: alertSent ? '#27AE60' : alertError ? '#E74C3C' : '#F08A6E', color: '#FFF1E4',
+                fontSize: 11, fontWeight: 700, cursor: (alerting || alertSent) ? 'not-allowed' : 'pointer', letterSpacing: '0.02em',
+              }}>
+                {alertSent ? '✓ ' + L('doctorAlerted') : alerting ? '⏳' : '🔔 ' + L('alertDoctor')}
+              </button>
+              <button onClick={startEdit} style={{ padding: '7px 10px', borderRadius: 99, border: '1.5px solid rgba(61,40,64,0.18)', background: 'transparent', color: '#5A3E5F', fontSize: 12, cursor: 'pointer' }}>✏️</button>
+            </div>
+          ) : (
+            <button onClick={startEdit} style={{ padding: '8px 14px', borderRadius: 99, border: 'none', background: '#3D2840', color: '#FFF1E4', fontSize: 12, fontWeight: 700, cursor: 'pointer', flexShrink: 0 }}>
+              {lang === 'bn' ? 'যোগ করুন' : 'Add'}
+            </button>
+          )}
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ fontSize: 12, color: '#7A5E78', fontWeight: 600 }}>{L('doctorCardTitle')}</div>
+          <input style={inputStyle} placeholder={L('fieldDoctorName')} value={draft.name} onChange={e => setDraft(d => ({ ...d, name: e.target.value }))} maxLength={80} />
+          <input style={{ ...inputStyle, borderColor: draft.email && !_validEmail(draft.email) ? '#E74C3C' : 'rgba(61,40,64,0.15)' }} placeholder={L('fieldDoctorEmail')} type="email" value={draft.email} onChange={e => { setDraft(d => ({ ...d, email: e.target.value })); setSaveError(''); }} maxLength={120} />
+          {saveError && <div style={{ fontSize: 12, color: '#E74C3C', marginTop: -4 }}>{saveError}</div>}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={save} disabled={!canSave} style={{
+              flex: 1, padding: '11px', borderRadius: 12, border: 'none',
+              background: !canSave ? 'rgba(61,40,64,0.2)' : '#3D2840',
+              color: '#FFF1E4', fontSize: 13, fontWeight: 700, cursor: !canSave ? 'not-allowed' : 'pointer',
+            }}>{saving ? L('saving') : L('saveChanges')}</button>
+            <button onClick={() => { setEditing(false); setSaveError(''); }} style={{ padding: '11px 16px', borderRadius: 12, border: '1.5px solid rgba(61,40,64,0.18)', background: 'transparent', color: '#5A3E5F', fontSize: 13, cursor: 'pointer' }}>{L('cancel')}</button>
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
 window.HomeScreen = HomeScreen;
+window.DoctorCard = DoctorCard;
 window.MeshBg = MeshBg;
 window.Grain = Grain;
 window.Pill = Pill;

@@ -238,19 +238,39 @@ function SessionPlayer({ session, lang, patientName, week, mood, onClose, onComp
   const catMeta     = _CAT_META[session?.category] || {};
   const catLabel    = catMeta[tlang] || catMeta.en || '';
 
+  // Derive session's light-theme gradient
+  const _sBg = session?.color_from && session?.color_to
+    ? `linear-gradient(180deg, ${session.color_from} 0%, #FFFCF7 70%)`
+    : `linear-gradient(180deg, #F2EBDA 0%, #FFFCF7 70%)`;
+  const _sBgMid = session?.color_from || '#F2EBDA';
+
   // ── DONE ─────────────────────────────────────────────────────────────────
   if (phase === 'done') {
     return (
       <div style={{
         position: 'absolute', inset: 0, zIndex: 50,
-        background: 'linear-gradient(160deg, #1E0E2C, #3D2840)',
+        background: `linear-gradient(180deg, ${_sBgMid} 0%, #FFF8F2 60%, #FFF1E4 100%)`,
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       }}>
-        <Tara ref={taraRef} size={200} mood="celebration"/>
-        <div style={{ fontFamily: 'var(--display)', fontSize: 30, color: '#FFF1E4', marginTop: 16, letterSpacing: '-0.02em' }}>
-          {L('playerDoneTitle')}
+        <div style={{ position: 'relative', marginBottom: 8 }}>
+          <div style={{
+            position: 'absolute', inset: -24, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(240,138,110,0.18), transparent 70%)',
+            animation: 'medPulse 2s ease-in-out infinite',
+          }}/>
+          <Tara ref={taraRef} size={200} mood="celebration"/>
         </div>
-        <div style={{ fontSize: 14, color: 'rgba(255,241,228,0.6)', marginTop: 8 }}>{L('playerDoneSub')}</div>
+        <div style={{ fontFamily: 'var(--display)', fontSize: 32, color: '#2A1A36', marginTop: 8, letterSpacing: '-0.02em', textAlign: 'center' }}>
+          {L('playerDoneTitle')} 🌸
+        </div>
+        <div style={{ fontSize: 15, color: '#5A3E5F', marginTop: 8, textAlign: 'center' }}>{L('playerDoneSub')}</div>
+        <button onClick={onClose} style={{
+          marginTop: 32, background: '#3D2840', border: 'none',
+          borderRadius: 99, color: '#FFF1E4', fontSize: 14, fontWeight: 700,
+          cursor: 'pointer', padding: '12px 32px', boxShadow: '0 8px 20px -6px rgba(61,40,64,0.4)',
+        }}>
+          ← {L('playerBack')}
+        </button>
       </div>
     );
   }
@@ -260,47 +280,54 @@ function SessionPlayer({ session, lang, patientName, week, mood, onClose, onComp
     return (
       <div style={{
         position: 'absolute', inset: 0, zIndex: 50,
-        background: 'linear-gradient(160deg, #1E0E2C, #2A1A36)',
+        background: 'linear-gradient(180deg, #FFF8F2 0%, #FFFCF7 100%)',
         display: 'flex', flexDirection: 'column', overflowY: 'auto',
       }}>
+        {/* Header */}
         <div style={{ display: 'flex', padding: '18px 20px 0' }}>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,241,228,0.5)', fontSize: 14, cursor: 'pointer', padding: 0 }}>
+          <button onClick={onClose} style={{
+            background: 'rgba(61,40,64,0.08)', border: '1.5px solid rgba(61,40,64,0.15)',
+            borderRadius: 99, color: '#3D2840', fontSize: 13, fontWeight: 700,
+            cursor: 'pointer', padding: '7px 14px', display: 'flex', alignItems: 'center', gap: 5,
+          }}>
             ← {L('playerBack')}
           </button>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 24px 32px', flex: 1 }}>
-          <Tara ref={taraRef} size={190} mood={postMood && _MOOD_SCORES[postMood] >= prevMoodScore ? 'happy' : 'caring'}/>
-          <div style={{ fontFamily: 'var(--display)', fontSize: 22, color: '#FFF1E4', marginTop: 14, textAlign: 'center', letterSpacing: '-0.02em' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '16px 24px 32px', flex: 1 }}>
+          <Tara ref={taraRef} size={180} mood={postMood && _MOOD_SCORES[postMood] >= prevMoodScore ? 'happy' : 'caring'}/>
+          <div style={{ fontFamily: 'var(--display)', fontSize: 22, color: '#2A1A36', marginTop: 10, textAlign: 'center', letterSpacing: '-0.02em' }}>
             {L('playerPostTitle')}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 22, width: '100%' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8, marginTop: 20, width: '100%' }}>
             {_MOOD_META.map(m => (
               <button key={m.k} onClick={() => setPostMood(m.k)} style={{
                 padding: '14px 8px', borderRadius: 20, border: 'none',
-                background: postMood === m.k ? m.color : 'rgba(255,255,255,0.08)',
+                background: postMood === m.k ? m.color : 'rgba(255,255,255,0.8)',
                 cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4,
-                outline: postMood === m.k ? '2px solid rgba(255,241,228,0.8)' : 'none',
+                outline: postMood === m.k ? `2px solid #3D2840` : '1.5px solid rgba(61,40,64,0.1)',
                 outlineOffset: -2, transition: 'all 200ms',
+                boxShadow: postMood === m.k ? '0 4px 12px -4px rgba(61,40,64,0.25)' : 'none',
               }}>
                 <span style={{ fontSize: 22 }}>{m.emoji}</span>
-                <span style={{ fontSize: 11, color: postMood === m.k ? '#2A1A36' : 'rgba(255,241,228,0.8)', fontWeight: 600 }}>
+                <span style={{ fontSize: 11, color: '#3D2840', fontWeight: 600 }}>
                   {tlang === 'bn' ? m.label_bn : m.label_en}
                 </span>
               </button>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 12, marginTop: 28, width: '100%' }}>
+          <div style={{ display: 'flex', gap: 12, marginTop: 24, width: '100%' }}>
             <button onClick={handleLogComplete} disabled={!postMood} style={{
               flex: 1, padding: '14px', borderRadius: 99, border: 'none',
-              background: postMood ? '#FFF1E4' : 'rgba(255,255,255,0.15)',
-              color: '#2A1A36', fontSize: 14, fontWeight: 700,
+              background: postMood ? '#3D2840' : 'rgba(61,40,64,0.12)',
+              color: postMood ? '#FFF1E4' : '#7A5E78', fontSize: 14, fontWeight: 700,
               cursor: postMood ? 'pointer' : 'not-allowed', transition: 'all 200ms',
+              boxShadow: postMood ? '0 8px 20px -6px rgba(61,40,64,0.4)' : 'none',
             }}>
               {L('playerPostLog')}
             </button>
             <button onClick={() => { onComplete && onComplete(null); onClose(); }} style={{
-              padding: '14px 20px', borderRadius: 99, border: '1.5px solid rgba(255,241,228,0.25)',
-              background: 'transparent', color: 'rgba(255,241,228,0.6)', fontSize: 14, cursor: 'pointer',
+              padding: '14px 20px', borderRadius: 99, border: '1.5px solid rgba(61,40,64,0.2)',
+              background: 'rgba(255,255,255,0.7)', color: '#5A3E5F', fontSize: 14, cursor: 'pointer',
             }}>
               {L('playerPostSkip')}
             </button>
@@ -310,82 +337,108 @@ function SessionPlayer({ session, lang, patientName, week, mood, onClose, onComp
     );
   }
 
+  // Breathing phase display label
+  const breatheLabel = { in: L('breatheIn'), hold: L('hold'), out: L('breatheOut'), idle: '' }[breatheP.p] || '';
+
   // ── PRE + IN ──────────────────────────────────────────────────────────────
   return (
     <div style={{
       position: 'absolute', inset: 0, zIndex: 50,
-      background: 'linear-gradient(160deg, #1E0E2C, #2A1A36)',
+      background: _sBg,
       display: 'flex', flexDirection: 'column',
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px 0', flexShrink: 0 }}>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,241,228,0.5)', fontSize: 14, cursor: 'pointer', padding: 0 }}>
+        <button onClick={onClose} style={{
+          background: 'rgba(255,255,255,0.7)', border: '1.5px solid rgba(61,40,64,0.18)',
+          borderRadius: 99, color: '#3D2840', fontSize: 13, fontWeight: 700,
+          cursor: 'pointer', padding: '7px 14px', display: 'flex', alignItems: 'center', gap: 5,
+          boxShadow: '0 2px 8px -4px rgba(61,40,64,0.2)',
+        }}>
           ← {L('playerBack')}
         </button>
-        <div style={{ fontSize: 11, color: 'rgba(255,241,228,0.4)', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+        <div style={{
+          background: 'rgba(255,255,255,0.6)', borderRadius: 99, padding: '5px 12px',
+          fontSize: 11, color: '#5A3E5F', fontWeight: 700, letterSpacing: '0.06em',
+        }}>
           {catLabel} · {durationMin} {L('minLabel')}
         </div>
       </div>
 
       {/* Session title */}
       <div style={{ padding: '10px 22px 0', textAlign: 'center', flexShrink: 0 }}>
-        <div style={{ fontFamily: 'var(--display)', fontSize: 20, color: '#FFF1E4', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
+        <div style={{ fontFamily: 'var(--display)', fontSize: 22, color: '#2A1A36', letterSpacing: '-0.02em', lineHeight: 1.1 }}>
           {titleText}
         </div>
-        <div style={{ fontSize: 11, color: 'rgba(255,241,228,0.4)', marginTop: 4 }}>
+        <div style={{ fontSize: 11, color: '#7A5E78', marginTop: 4, fontWeight: 600 }}>
           {tlang === 'bn' ? `সপ্তাহ ${week || 20}` : `Week ${week || 20}`} · {trimLabel}
         </div>
       </div>
 
       {/* Tara + breathing rings */}
       <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center', flex: 1, minHeight: 0 }}>
+        {/* Outer glow ring */}
         <div style={{
-          position: 'absolute', width: 310, height: 310, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,255,255,0.07), transparent 70%)',
+          position: 'absolute', width: 300, height: 300, borderRadius: '50%',
+          background: `radial-gradient(circle, rgba(61,40,64,0.08), transparent 70%)`,
           transform: `scale(${ringScale})`,
           transition: `transform ${breatheP.dur}ms cubic-bezier(0.4,0,0.2,1)`,
         }}/>
+        {/* Inner ring */}
         <div style={{
           position: 'absolute', width: 200, height: 200, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(240,138,110,0.15), transparent 70%)',
+          border: `2px solid rgba(61,40,64,${ringScale > 1.1 ? '0.18' : '0.08'})`,
           transform: `scale(${ringScale * 0.85})`,
-          transition: `transform ${breatheP.dur}ms cubic-bezier(0.4,0,0.2,1)`,
+          transition: `transform ${breatheP.dur}ms cubic-bezier(0.4,0,0.2,1), border-color 400ms`,
         }}/>
-        <Tara ref={taraRef} size={270} mood={taraMood} style={{ position: 'relative', zIndex: 1 }}/>
+        <Tara ref={taraRef} size={260} mood={taraMood} style={{ position: 'relative', zIndex: 1 }}/>
+        {/* Breathing label over Tara area */}
+        {phase === 'in' && breatheLabel && (
+          <div style={{
+            position: 'absolute', bottom: '18%', left: '50%', transform: 'translateX(-50%)',
+            background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(6px)',
+            borderRadius: 99, padding: '5px 16px', fontSize: 12, fontWeight: 700,
+            color: '#3D2840', letterSpacing: '0.04em', whiteSpace: 'nowrap',
+            boxShadow: '0 2px 10px -4px rgba(61,40,64,0.18)',
+          }}>
+            {breatheLabel}
+          </div>
+        )}
       </div>
 
       {/* Instruction / greeting */}
-      <div style={{ padding: '0 26px', textAlign: 'center', flexShrink: 0, minHeight: 96 }}>
+      <div style={{ padding: '0 26px', textAlign: 'center', flexShrink: 0, minHeight: 90 }}>
         {phase === 'pre' ? (
           <div>
-            <div style={{ fontSize: 15, color: 'rgba(255,241,228,0.85)', lineHeight: 1.7, fontFamily: 'var(--ui)' }}>
+            <div style={{ fontSize: 15, color: '#5A3E5F', lineHeight: 1.75, fontFamily: 'var(--ui)' }}>
               {_preGreeting(patientName, week || 20, mood, tlang)}
             </div>
             <button onClick={handleBeginNow} style={{
-              marginTop: 14, padding: '9px 26px', borderRadius: 99,
-              border: '1.5px solid rgba(255,241,228,0.35)', background: 'transparent',
-              color: 'rgba(255,241,228,0.75)', fontSize: 13, cursor: 'pointer',
+              marginTop: 14, padding: '10px 28px', borderRadius: 99,
+              border: 'none', background: '#3D2840',
+              color: '#FFF1E4', fontSize: 13, fontWeight: 700, cursor: 'pointer',
+              boxShadow: '0 6px 18px -6px rgba(61,40,64,0.45)',
             }}>
               {L('sessionBegin')} →
             </button>
           </div>
         ) : (
-          <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#FFF1E4', lineHeight: 1.55, letterSpacing: '-0.01em' }}>
+          <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#2A1A36', lineHeight: 1.6, letterSpacing: '-0.01em' }}>
             {longPaused ? L('pausePrompt') : instrText}
           </div>
         )}
       </div>
 
       {/* Bottom controls */}
-      <div style={{ padding: '0 22px 28px', flexShrink: 0 }}>
+      <div style={{ padding: '6px 22px 28px', flexShrink: 0 }}>
         {/* Step dots */}
         {phase === 'in' && steps.length > 1 && (
-          <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginBottom: 14 }}>
+          <div style={{ display: 'flex', gap: 4, justifyContent: 'center', marginBottom: 12 }}>
             {steps.map((_, i) => (
               <div key={i} style={{
-                height: 6, borderRadius: 3,
-                width: i === stepIdx ? 18 : 6,
-                background: i < stepIdx ? 'rgba(255,241,228,0.6)' : i === stepIdx ? '#F08A6E' : 'rgba(255,241,228,0.18)',
+                height: 5, borderRadius: 3,
+                width: i === stepIdx ? 20 : 5,
+                background: i < stepIdx ? 'rgba(61,40,64,0.45)' : i === stepIdx ? '#3D2840' : 'rgba(61,40,64,0.14)',
                 transition: 'all 300ms',
               }}/>
             ))}
@@ -394,56 +447,60 @@ function SessionPlayer({ session, lang, patientName, week, mood, onClose, onComp
 
         {/* Pre-phase progress bar */}
         {phase === 'pre' && (
-          <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.1)', marginBottom: 16, overflow: 'hidden' }}>
-            <div style={{ height: '100%', borderRadius: 2, background: 'rgba(255,241,228,0.4)', width: `${preProgress * 100}%`, transition: 'width 150ms linear' }}/>
+          <div style={{ height: 4, borderRadius: 2, background: 'rgba(61,40,64,0.1)', marginBottom: 16, overflow: 'hidden' }}>
+            <div style={{ height: '100%', borderRadius: 2, background: '#3D2840', width: `${preProgress * 100}%`, transition: 'width 150ms linear' }}/>
           </div>
         )}
 
         {/* Time scrubber */}
         {phase === 'in' && (
-          <div style={{ marginBottom: 18 }}>
-            <div style={{ height: 3, borderRadius: 2, background: 'rgba(255,255,255,0.1)', overflow: 'hidden' }}>
-              <div style={{ height: '100%', borderRadius: 2, background: 'linear-gradient(90deg, #F08A6E, #F4B4C8)', width: `${progressPct * 100}%`, transition: 'width 200ms linear' }}/>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ height: 4, borderRadius: 2, background: 'rgba(61,40,64,0.1)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', borderRadius: 2, background: 'linear-gradient(90deg, #3D2840, #A0718E)', width: `${progressPct * 100}%`, transition: 'width 200ms linear' }}/>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
-              <span style={{ fontSize: 11, color: 'rgba(255,241,228,0.45)' }}>{_fmtTime(totalElapsed)}</span>
-              <span style={{ fontSize: 11, color: 'rgba(255,241,228,0.25)' }}>{_fmtTime(totalDuration)}</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
+              <span style={{ fontSize: 11, color: '#7A5E78', fontWeight: 600 }}>{_fmtTime(totalElapsed)}</span>
+              <span style={{ fontSize: 11, color: 'rgba(90,62,95,0.45)' }}>{_fmtTime(totalDuration)}</span>
             </div>
           </div>
         )}
 
         {/* Controls */}
         {phase === 'in' && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 28 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
             <button onClick={handlePrev} disabled={stepIdx === 0} style={{
-              width: 44, height: 44, borderRadius: '50%', border: 'none',
-              background: stepIdx === 0 ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.1)',
-              color: stepIdx === 0 ? 'rgba(255,241,228,0.15)' : 'rgba(255,241,228,0.7)',
+              width: 46, height: 46, borderRadius: '50%',
+              border: '1.5px solid rgba(61,40,64,0.18)',
+              background: stepIdx === 0 ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.75)',
+              color: stepIdx === 0 ? 'rgba(61,40,64,0.2)' : '#3D2840',
               fontSize: 17, cursor: stepIdx === 0 ? 'not-allowed' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: stepIdx === 0 ? 'none' : '0 4px 12px -4px rgba(61,40,64,0.22)',
             }}>⏮</button>
 
             <button onClick={handlePause} style={{
-              width: 62, height: 62, borderRadius: '50%', border: 'none',
-              background: '#FFF1E4', color: '#2A1A36', fontSize: 22, cursor: 'pointer',
+              width: 64, height: 64, borderRadius: '50%', border: 'none',
+              background: '#3D2840', color: '#FFF1E4', fontSize: 22, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.35)',
+              boxShadow: '0 8px 24px -6px rgba(61,40,64,0.5)',
             }}>
               {isPlaying ? '⏸' : '▶'}
             </button>
 
             <button onClick={handleNext} style={{
-              width: 44, height: 44, borderRadius: '50%', border: 'none',
-              background: 'rgba(255,255,255,0.1)',
-              color: 'rgba(255,241,228,0.7)', fontSize: 17, cursor: 'pointer',
+              width: 46, height: 46, borderRadius: '50%',
+              border: '1.5px solid rgba(61,40,64,0.18)',
+              background: 'rgba(255,255,255,0.75)',
+              color: '#3D2840', fontSize: 17, cursor: 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 4px 12px -4px rgba(61,40,64,0.22)',
             }}>⏭</button>
           </div>
         )}
 
         {phase === 'in' && (
-          <div style={{ textAlign: 'center', marginTop: 10 }}>
-            <span style={{ fontSize: 11, color: 'rgba(255,241,228,0.25)', letterSpacing: '0.06em' }}>
+          <div style={{ textAlign: 'center', marginTop: 8 }}>
+            <span style={{ fontSize: 11, color: 'rgba(90,62,95,0.5)', letterSpacing: '0.06em' }}>
               {L('playerStep').replace('{a}', stepIdx + 1).replace('{b}', steps.length)}
             </span>
           </div>
@@ -987,6 +1044,163 @@ function MoodHistoryGraph({ data, lang, loading }) {
   );
 }
 
+// ── Meditation Section ────────────────────────────────────────────────────────
+
+const _FEATURED_CARD_META = {
+  loving_kindness:        { gradient: 'linear-gradient(145deg, #F4D7E5, #FBD7C6)', icon: '🫶' },
+  body_scan:              { gradient: 'linear-gradient(145deg, #C9BEE4, #D5EBF0)', icon: '🌊' },
+  '478_breathing':        { gradient: 'linear-gradient(145deg, #E0D5F0, #C9BEE4)', icon: '🌬️' },
+  peaceful_visualization: { gradient: 'linear-gradient(145deg, #D5EBE0, #E5EDD5)', icon: '🏔️' },
+};
+
+const _FALLBACK_FEATURED = [
+  { id: 'loving_kindness',        category: 'calm',    duration_sec: 300, icon: '🫶',
+    color_from: '#F4D7E5', color_to: '#FBD7C6',
+    title: { en: 'Loving-Kindness',        bn: 'ভালোবাসার মেডিটেশন' },
+    subtitle: { en: '5 min · For Mother & Baby', bn: '৫ মিনিট · মা ও শিশুর জন্য' } },
+  { id: 'body_scan',              category: 'calm',    duration_sec: 300, icon: '🌊',
+    color_from: '#C9BEE4', color_to: '#D5EBF0',
+    title: { en: 'Body Scan',              bn: 'বডি স্ক্যান' },
+    subtitle: { en: '5 min · Body Awareness',    bn: '৫ মিনিট · শরীর সচেতনতা' } },
+  { id: '478_breathing',          category: 'breathe', duration_sec: 180, icon: '🌬️',
+    color_from: '#E0D5F0', color_to: '#C9BEE4',
+    title: { en: '4-7-8 Breathing',        bn: '৪-৭-৮ শ্বাস' },
+    subtitle: { en: '3 min · Calm Anxiety',      bn: '৩ মিনিট · উদ্বেগ কমান' } },
+  { id: 'peaceful_visualization', category: 'calm',    duration_sec: 300, icon: '🏔️',
+    color_from: '#D5EBE0', color_to: '#E5EDD5',
+    title: { en: 'Peaceful Visualization', bn: 'শান্তির কল্পনা' },
+    subtitle: { en: '5 min · Visualize Peace',   bn: '৫ মিনিট · শান্তি কল্পনা' } },
+];
+
+function StreakBadge({ streak, lang }) {
+  const L = (key) => window.tStr(key, lang);
+  if (!streak) return null;
+  const { streak_days: n, message } = streak;
+  const label = n >= 2
+    ? L('streakDays').replace('{n}', n)
+    : n === 1 ? L('streakToday')
+    : L('streakStart');
+  return (
+    <div style={{
+      display: 'inline-flex', alignItems: 'center', gap: 4,
+      background: n >= 2 ? 'linear-gradient(90deg,#FDEBD0,#FBD7C6)' : 'rgba(255,255,255,0.7)',
+      borderRadius: 99, padding: '4px 10px',
+      fontSize: 11, fontWeight: 700, color: '#3D2840',
+      boxShadow: '0 2px 8px -4px rgba(61,40,64,0.2)',
+    }}>
+      {label}
+    </div>
+  );
+}
+
+function MeditationSection({ sessions, loading, loadingId, completedToday, onBegin, streak, lang, recommendedId }) {
+  const L    = (key) => window.tStr(key, lang);
+  const tl   = (lang === 'bn' || lang === 'mixed') ? 'bn' : 'en';
+
+  return (
+    <div style={{ padding: '18px 0 0' }}>
+      {/* Header row */}
+      <div style={{ padding: '0 22px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+        <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', letterSpacing: '-0.01em' }}>
+          {L('meditationTitle')}
+        </div>
+        <StreakBadge streak={streak} lang={lang}/>
+      </div>
+
+      {/* Horizontal scroll row */}
+      <div style={{ display: 'flex', gap: 12, overflowX: 'auto', scrollbarWidth: 'none', padding: '0 22px 4px', WebkitOverflowScrolling: 'touch' }}>
+        {loading ? (
+          [0,1,2,3].map(i => (
+            <div key={i} style={{ flexShrink: 0, width: 200, height: 200, borderRadius: 24, background: 'rgba(255,255,255,0.5)' }}/>
+          ))
+        ) : sessions.map(s => {
+          const meta   = _FEATURED_CARD_META[s.id] || { gradient: 'linear-gradient(145deg,#F2EBDA,#FBE5D6)', icon: '🌸' };
+          const title  = s.title?.[tl]  || s.title?.en  || s.id;
+          const sub    = s.subtitle?.[tl] || s.subtitle?.en || '';
+          const durMin = Math.round((s.duration_sec || 0) / 60);
+          const done   = completedToday.has(s.id);
+          const isBusy = loadingId === s.id;
+
+          return (
+            <div key={s.id} onClick={() => !isBusy && onBegin(s)} style={{
+              flexShrink: 0, width: 200, height: 200, borderRadius: 24, overflow: 'hidden',
+              display: 'flex', flexDirection: 'column', cursor: 'pointer',
+              boxShadow: '0 10px 28px -12px rgba(61,40,64,0.32)',
+              position: 'relative', transition: 'transform 140ms',
+            }}>
+              {/* Gradient top with icon + pulse ring */}
+              <div style={{
+                flex: '0 0 112px', background: meta.gradient,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                position: 'relative',
+              }}>
+                <div style={{
+                  position: 'absolute', width: 72, height: 72, borderRadius: '50%',
+                  border: '2px solid rgba(255,255,255,0.5)',
+                  animation: 'medPulse 3s ease-in-out infinite',
+                }}/>
+                <div style={{
+                  position: 'absolute', width: 52, height: 52, borderRadius: '50%',
+                  border: '2px solid rgba(255,255,255,0.35)',
+                  animation: 'medPulse 3s ease-in-out infinite 1.5s',
+                }}/>
+                <span style={{ fontSize: 38, position: 'relative', zIndex: 1 }}>{meta.icon}</span>
+                {s.id === recommendedId && (
+                  <div style={{
+                    position: 'absolute', top: 8, left: 8,
+                    background: 'rgba(255,255,255,0.92)', borderRadius: 99,
+                    padding: '3px 8px', fontSize: 9, fontWeight: 700,
+                    color: '#3D2840', letterSpacing: '0.02em',
+                    boxShadow: '0 2px 6px -2px rgba(61,40,64,0.2)', whiteSpace: 'nowrap',
+                  }}>Tara's Pick 🌸</div>
+                )}
+                {done && (
+                  <div style={{
+                    position: 'absolute', top: 8, right: 10,
+                    background: '#4CAF50', color: '#fff', borderRadius: '50%',
+                    width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 12, fontWeight: 700,
+                  }}>✓</div>
+                )}
+              </div>
+
+              {/* White bottom panel */}
+              <div style={{
+                flex: 1, background: 'rgba(255,252,247,0.95)', padding: '10px 12px 12px',
+                display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+              }}>
+                <div>
+                  <div style={{ fontFamily: 'var(--display)', fontSize: 13.5, color: '#2A1A36', lineHeight: 1.25, letterSpacing: '-0.01em' }}>
+                    {title}
+                  </div>
+                  <div style={{ fontSize: 10.5, color: '#7A5E78', marginTop: 2, lineHeight: 1.3 }}>
+                    {durMin} {L('minLabel')}
+                  </div>
+                </div>
+                <button onClick={(e) => { e.stopPropagation(); !isBusy && onBegin(s); }} style={{
+                  background: '#3D2840', color: '#FFF1E4', border: 'none', borderRadius: 10,
+                  padding: '7px 0', fontSize: 11.5, fontWeight: 700, cursor: 'pointer',
+                  width: '100%', opacity: isBusy ? 0.6 : 1, transition: 'opacity 150ms',
+                }}>
+                  {isBusy ? '…' : L('sessionBegin')}
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* CSS keyframe for pulse animation */}
+      <style>{`
+        @keyframes medPulse {
+          0%, 100% { transform: scale(1);   opacity: 0.6; }
+          50%       { transform: scale(1.18); opacity: 0.15; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 // ── Wellness Screen v2 ────────────────────────────────────────────────────────
 
 function WellnessScreen({ state, setState, openScreen, wellnessMood, setWellnessMood, wellnessLibCat, setWellnessLibCat }) {
@@ -1015,8 +1229,18 @@ function WellnessScreen({ state, setState, openScreen, wellnessMood, setWellness
   const [libSessions,   setLibSessions]   = React.useState([]);
   const [libLoading,    setLibLoading]    = React.useState(false);
   const [loadingId,     setLoadingId]     = React.useState(null);
-  const [moodHistory,   setMoodHistory]   = React.useState(null);
-  const [histLoading,   setHistLoading]   = React.useState(false);
+  const [moodHistory,      setMoodHistory]      = React.useState(null);
+  const [histLoading,      setHistLoading]      = React.useState(false);
+  const [featuredSessions, setFeaturedSessions] = React.useState(_FALLBACK_FEATURED);
+  const [featuredLoading,  setFeaturedLoading]  = React.useState(false);
+  const [streak,           setStreak]           = React.useState(null);
+  const [completedToday,   setCompletedToday]   = React.useState(() => {
+    try {
+      const raw = JSON.parse(localStorage.getItem('maya_meditation_today') || '{}');
+      const today = new Date().toISOString().split('T')[0];
+      return new Set(raw.date === today ? (raw.ids || []) : []);
+    } catch { return new Set(); }
+  });
 
   const B    = window.BACKEND_URL;
   const hdrs = () => ({ 'Content-Type': 'application/json', 'Authorization': `Bearer ${_tok()}` });
@@ -1058,6 +1282,24 @@ function WellnessScreen({ state, setState, openScreen, wellnessMood, setWellness
       .catch(() => { setMoodHistory([]); setHistLoading(false); });
   }, []);
 
+  // Fetch featured meditation sessions on mount (fallback to static data on error)
+  React.useEffect(() => {
+    fetch(`${B}/wellness/featured`)
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(data => { if (Array.isArray(data) && data.length) setFeaturedSessions(data); })
+      .catch(() => { /* keep _FALLBACK_FEATURED */ });
+  }, []);
+
+  // Fetch streak on mount (authenticated patients only)
+  React.useEffect(() => {
+    const pid = _pid();
+    if (pid === 'guest') return;
+    fetch(`${B}/wellness/streak/${pid}`, { headers: hdrs() })
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setStreak(data); })
+      .catch(() => {});
+  }, []);
+
   // Begin session: fetch full session JSON (with steps) then open player
   const handleBeginSession = React.useCallback((sessionMeta) => {
     if (sessionMeta.steps) {
@@ -1090,18 +1332,34 @@ function WellnessScreen({ state, setState, openScreen, wellnessMood, setWellness
         mood_after: postMood || undefined,
       }),
     }).then(r => r.json()).then(() => {
-      // refresh mood history after log
+      // mark session as completed today
+      const sid = activeSession.id;
+      setCompletedToday(prev => {
+        const next = new Set(prev);
+        next.add(sid);
+        const today = new Date().toISOString().split('T')[0];
+        try { localStorage.setItem('maya_meditation_today', JSON.stringify({ date: today, ids: [...next] })); } catch {}
+        return next;
+      });
+      // refresh mood history
       fetch(`${B}/wellness/mood-history/${pid}?days=7`, { headers: hdrs() })
         .then(r => r.ok ? r.json() : [])
         .then(data => setMoodHistory(Array.isArray(data) ? data : []))
         .catch(() => {});
+      // refresh streak
+      fetch(`${B}/wellness/streak/${pid}`, { headers: hdrs() })
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (data) setStreak(data); })
+        .catch(() => {});
     }).catch(() => {});
   }, [activeSession, mood, B]);
 
-  // If session player is active, render it fullscreen
+  // If session player is active, render it fullscreen.
+  // position: absolute top/left/right/bottom: 0 is relative to the App scroll container
+  // (position: absolute, inset: 0 = 402×874). zIndex: 40 exceeds BottomNav (zIndex: 20).
   if (activeSession) {
     return (
-      <div className="screen wellness" style={{ position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 40, overflow: 'hidden' }}>
         <SessionPlayer
           session={activeSession}
           lang={lang}
@@ -1115,7 +1373,6 @@ function WellnessScreen({ state, setState, openScreen, wellnessMood, setWellness
     );
   }
 
-  const primSession = recommended?.primary;
   const affirmation = _AFFIRMATION_MAP[mood] || _AFFIRMATION_MAP.okay;
   const catTabs     = ['all', 'breathe', 'move', 'calm', 'sleep'];
   const weekLabel   = tlang === 'bn' ? `সপ্তাহ ${week}` : `Week ${week}`;
@@ -1155,57 +1412,17 @@ function WellnessScreen({ state, setState, openScreen, wellnessMood, setWellness
         </div>
       </div>
 
-      {/* Tara's Pick */}
-      <div style={{ padding: '18px 22px 0' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
-          <div style={{ fontFamily: 'var(--display)', fontSize: 18, color: '#3D2840', letterSpacing: '-0.01em' }}>
-            {L('wellnessPick')}
-          </div>
-          <span style={{ fontSize: 11, color: '#7A5E78' }}>{L('wellnessPickSub')}</span>
-        </div>
-
-        {recLoading ? (
-          <Card style={{ height: 130, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ fontSize: 13, color: '#7A5E78' }}>{L('sessionLoading')}</div>
-          </Card>
-        ) : recError || !primSession ? (
-          <Card style={{ padding: 18 }}>
-            <div style={{ fontSize: 13, color: '#7A5E78' }}>{L('sessionError')} ·&nbsp;
-              <button onClick={() => { setRecError(false); setMood(m => m); }} style={{ color: '#3D2840', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 }}>
-                retry
-              </button>
-            </div>
-          </Card>
-        ) : (
-          <Card style={{
-            background: `linear-gradient(135deg, ${(_CAT_META[primSession.category] || {}).from || '#F2EBDA'}, ${(_CAT_META[primSession.category] || {}).to || '#FBE5D6'})`,
-            padding: 0, overflow: 'hidden',
-          }}>
-            <div style={{ display: 'flex', gap: 16, padding: '18px 18px 12px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <Tara size={88} mood="caring"/>
-              </div>
-              <div style={{ flex: 1 }}>
-                <Pill tone="lav">{(_CAT_META[primSession.category] || {})[tlang] || primSession.category}</Pill>
-                <div style={{ fontFamily: 'var(--display)', fontSize: 20, color: '#2A1A36', marginTop: 6, letterSpacing: '-0.01em', lineHeight: 1.2 }}>
-                  {primSession.title?.[tlang] || primSession.title?.en}
-                </div>
-                <div style={{ fontSize: 11, color: '#5A3E5F', marginTop: 3 }}>
-                  {primSession.subtitle?.[tlang] || primSession.subtitle?.en}
-                </div>
-              </div>
-            </div>
-            <div style={{ padding: '0 18px 16px' }}>
-              <button onClick={() => handleBeginSession(primSession)} style={{
-                ...primaryBtn, width: '100%', justifyContent: 'center',
-                opacity: loadingId === primSession.id ? 0.6 : 1,
-              }}>
-                {loadingId === primSession.id ? '…' : L('sessionBegin')}
-              </button>
-            </div>
-          </Card>
-        )}
-      </div>
+      {/* Meditation Section */}
+      <MeditationSection
+        sessions={featuredSessions}
+        loading={featuredLoading}
+        loadingId={loadingId}
+        completedToday={completedToday}
+        onBegin={handleBeginSession}
+        streak={streak}
+        lang={lang}
+        recommendedId={recommended?.primary?.id}
+      />
 
       {/* Library */}
       <div style={{ padding: '18px 22px 0' }}>
@@ -1310,6 +1527,7 @@ function CareScreen({ state, setState, openScreen }) {
   const [showHealthLog, setShowHealthLog] = React.useState(false);
   const [showBookAppt, setShowBookAppt] = React.useState(false);
   const [rescheduleType, setRescheduleType] = React.useState(null);
+  const [doctorAlerted, setDoctorAlerted] = React.useState(false);
 
   const _pid = () => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}').id || 'guest'; } catch { return 'guest'; } };
   const _tok = () => { try { return JSON.parse(localStorage.getItem('maya_session') || '{}').token || ''; } catch { return ''; } };
@@ -1367,6 +1585,16 @@ function CareScreen({ state, setState, openScreen }) {
     } finally {
       setSosLoading(null);
     }
+    // Alert doctor if registered
+    try {
+      const alertRes = await fetch(`${window.BACKEND_URL}/doctor/alert`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${_tok()}` },
+        body: JSON.stringify({ patient_id: _pid(), trigger: 'sos', sos_type: lKey }),
+      });
+      const alertData = await alertRes.json();
+      if (alertData.sent) { setDoctorAlerted(true); setTimeout(() => setDoctorAlerted(false), 6000); }
+    } catch {}
   };
 
   const now = new Date();
@@ -1586,8 +1814,18 @@ function CareScreen({ state, setState, openScreen }) {
         </Card>
       </div>
 
+      {/* Doctor card */}
+      <div style={{ padding: '8px 22px 0' }}>
+        <DoctorCard lang={lang} />
+      </div>
+
       <div style={{ padding: '16px 22px 20px' }}>
         <Card style={{ background: emergency ? 'linear-gradient(160deg, #FBD6CB, #F8C9C0)' : '#FFFCF7' }}>
+          {doctorAlerted && (
+            <div style={{ background: '#27AE60', color: '#fff', borderRadius: 10, padding: '8px 14px', fontSize: 12, fontWeight: 600, marginBottom: 12, textAlign: 'center' }}>
+              ✓ {L('doctorAlerted')}
+            </div>
+          )}
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <div style={{ width: 48, height: 48, borderRadius: 16, background: emergency ? '#F08A6E' : '#FBD6CB', display: 'grid', placeItems: 'center', fontSize: 22 }}>🆘</div>
             <div style={{ flex: 1 }}>

@@ -27,6 +27,8 @@ def init_db():
             ("patients",           "theme",      "VARCHAR DEFAULT 'dawn'"),
             ("patients",           "notifications",  "TEXT"),
             ("patients",           "voice_settings", "TEXT"),
+            ("patients",           "doctor_name",    "VARCHAR"),
+            ("patients",           "doctor_email",   "VARCHAR"),
         ]:
             try:
                 conn.execute(_text(f"ALTER TABLE {tbl} ADD COLUMN {col} {ddl}"))

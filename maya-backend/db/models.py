@@ -31,6 +31,8 @@ class Patient(Base):
     guardian_phone      = Column(String, nullable=True)
     health_worker_phone = Column(String, nullable=True)
     health_worker_id    = Column(String, nullable=True)
+    doctor_name         = Column(String, nullable=True)
+    doctor_email        = Column(String, nullable=True)
     status              = Column(String, default="active")  # pending_verification | active
     due_date            = Column(String, nullable=True)     # ISO date string
     lang                = Column(String, default="bn")      # bn | en | mixed

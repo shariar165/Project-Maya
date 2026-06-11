@@ -133,6 +133,17 @@ class UpdateProfileRequest(BaseModel):
     is_first_pregnancy: Optional[bool] = None
     guardian_name:      Optional[str]  = None
     guardian_phone:     Optional[str]  = None
+    doctor_name:        Optional[str]  = None
+    doctor_email:       Optional[str]  = None
+
+
+class DoctorAlertRequest(BaseModel):
+    patient_id: str
+    trigger:    str               # sos | risk | tara
+    sos_type:   Optional[str] = None
+    symptoms:   list = []
+    level:      Optional[str] = None
+    message:    Optional[str] = None
 
 
 class WellnessCompleteRequest(BaseModel):
@@ -195,6 +206,8 @@ async def get_profile(patient_id: str, authorization: Optional[str] = Header(Non
             "isFirstPregnancy": patient.is_first_pregnancy,
             "guardianName":     patient.guardian_name,
             "guardianPhone":    patient.guardian_phone,
+            "doctorName":       patient.doctor_name,
+            "doctorEmail":      patient.doctor_email,
             "lastWeight":       patient.last_weight,
             "lastBpReading":    patient.last_bp_reading,
         }
@@ -230,6 +243,8 @@ async def update_profile(
         if req.is_first_pregnancy is not None: patient.is_first_pregnancy = req.is_first_pregnancy
         if req.guardian_name      is not None: patient.guardian_name      = req.guardian_name
         if req.guardian_phone     is not None: patient.guardian_phone     = req.guardian_phone
+        if req.doctor_name        is not None: patient.doctor_name        = req.doctor_name
+        if req.doctor_email       is not None: patient.doctor_email       = req.doctor_email
 
         return {
             "status":           "updated",
@@ -246,7 +261,68 @@ async def update_profile(
             "isFirstPregnancy": patient.is_first_pregnancy,
             "guardianName":     patient.guardian_name,
             "guardianPhone":    patient.guardian_phone,
+            "doctorName":       patient.doctor_name,
+            "doctorEmail":      patient.doctor_email,
         }
+
+
+# ── Doctor alert endpoint ─────────────────────────────────────────────────────
+
+@app.post("/doctor/alert")
+async def doctor_alert(req: DoctorAlertRequest, authorization: Optional[str] = Header(None)):
+    """Send an alert email to the patient's registered doctor."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    verify_access_token(authorization.split(" ", 1)[1])
+
+    if not req.patient_id or req.patient_id in ("guest", ""):
+        return {"sent": False, "reason": "guest_user"}
+
+    valid_triggers = {"sos", "risk", "tara", "manual"}
+    if req.trigger not in valid_triggers:
+        raise HTTPException(status_code=422, detail=f"trigger must be one of {valid_triggers}")
+
+    with get_db() as db:
+        patient = db.query(Patient).filter(Patient.id == req.patient_id).first()
+        if not patient:
+            raise HTTPException(status_code=404, detail="Patient not found")
+        doctor_email   = patient.doctor_email
+        doctor_name    = patient.doctor_name
+        patient_name   = patient.name
+        patient_week   = patient.pregnancy_week
+        patient_bp     = patient.last_bp_reading
+        patient_weight = patient.last_weight
+
+    if not doctor_email:
+        return {"sent": False, "reason": "no_doctor_email"}
+
+    # Basic email format guard
+    import re
+    if not re.match(r"[^@\s]+@[^@\s]+\.[^@\s]+", doctor_email):
+        return {"sent": False, "reason": "invalid_doctor_email"}
+
+    from auth.email_service import send_doctor_alert_email
+    details = {
+        "sos_type": req.sos_type,
+        "symptoms": [str(s) for s in req.symptoms],   # ensure list of strings
+        "level":    req.level,
+        "message":  req.message,
+    }
+    try:
+        sent = await send_doctor_alert_email(
+            to_email=doctor_email,
+            doctor_name=doctor_name or "Doctor",
+            patient_name=patient_name or "Patient",
+            patient_week=patient_week or 0,
+            trigger=req.trigger,
+            details=details,
+            patient_bp=patient_bp,
+            patient_weight=patient_weight,
+        )
+    except Exception as e:
+        import logging; logging.getLogger("maya").error("[/doctor/alert] Email error: %s", e)
+        sent = False
+    return {"sent": sent}
 
 
 # ── Main chat endpoint ────────────────────────────────────────────────────────
@@ -739,6 +815,70 @@ async def wellness_mood_history(
             for l in logs
         ]
     return result
+
+
+_FEATURED_MEDITATION_IDS = [
+    "loving_kindness",
+    "body_scan",
+    "478_breathing",
+    "peaceful_visualization",
+]
+
+
+@app.get("/wellness/featured")
+async def wellness_featured():
+    """Return 4 curated meditation sessions (no steps) for the featured section."""
+    from wellness.session_loader import get_session_by_id
+    results = []
+    for sid in _FEATURED_MEDITATION_IDS:
+        s = get_session_by_id(sid)
+        if s:
+            results.append({k: v for k, v in s.items() if k != "steps"})
+    return results
+
+
+@app.get("/wellness/streak/{patient_id}")
+async def wellness_streak(
+    patient_id: str,
+    authorization: Optional[str] = Header(None),
+):
+    """Return the current meditation streak (consecutive days with at least one session)."""
+    import humanize
+
+    if patient_id == "guest":
+        return {"streak_days": 0, "last_session_human": None, "message": "Start your streak today 🌱"}
+
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Missing Authorization header")
+    verify_access_token(authorization.split(" ", 1)[1])
+
+    with get_db() as db:
+        sessions = (
+            db.query(WellnessSession)
+            .filter(WellnessSession.patient_id == patient_id)
+            .order_by(WellnessSession.completed_at.desc())
+            .all()
+        )
+        dates = sorted({s.completed_at.date() for s in sessions}, reverse=True)
+        last_at = sessions[0].completed_at if sessions else None
+
+    today = datetime.utcnow().date()
+    streak = 0
+    for i, d in enumerate(dates):
+        if d == today - timedelta(days=i):
+            streak += 1
+        else:
+            break
+
+    last_human = humanize.naturaltime(last_at) if last_at else None
+    if streak == 0:
+        msg = "Start your streak today 🌱"
+    elif streak == 1:
+        msg = "You meditated today ✓"
+    else:
+        msg = f"🔥 {streak}-day streak! Keep it going."
+
+    return {"streak_days": streak, "last_session_human": last_human, "message": msg}
 
 
 # ── n8n health check ──────────────────────────────────────────────────────────
