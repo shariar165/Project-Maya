@@ -922,7 +922,7 @@ function RiskScreen({ state, setState, openScreen }) {
   const [loading, setLoading] = React.useState(false);
   const [taraMsg, setTaraMsg] = React.useState(null);
   const [apiError, setApiError] = React.useState(false);
-  const [vitals, setVitals] = React.useState({ bp: null, sleep: null });
+  const [vitals, setVitals] = React.useState({ bp: null, sleep: null, hydration: null });
   const [backendLevel, setBackendLevel] = React.useState(null);
 
   React.useEffect(() => {
@@ -935,10 +935,13 @@ function RiskScreen({ state, setState, openScreen }) {
         .then(r => r.ok ? r.json() : null).catch(() => null),
       fetch(`${window.BACKEND_URL}/health-logs/${patientId}?data_type=sleep&limit=1`, { headers: authHeader })
         .then(r => r.ok ? r.json() : []).catch(() => []),
-    ]).then(([profile, sleepLogs]) => {
+      fetch(`${window.BACKEND_URL}/health-logs/${patientId}?data_type=hydration&limit=1`, { headers: authHeader })
+        .then(r => r.ok ? r.json() : []).catch(() => []),
+    ]).then(([profile, sleepLogs, hydrationLogs]) => {
       setVitals({
         bp: profile?.lastBpReading || null,
         sleep: sleepLogs?.[0]?.value || null,
+        hydration: hydrationLogs?.[0]?.value || null,
       });
     });
   }, []);
@@ -1104,7 +1107,14 @@ function RiskScreen({ state, setState, openScreen }) {
               s: slpVal === null ? 'N/A' : slpVal >= 7 ? 'good' : slpVal >= 5 ? 'okay' : 'low',
               c: slpVal === null ? '#ADA3B0' : slpVal >= 7 ? '#7BC894' : slpVal >= 5 ? '#E5A064' : '#D14040',
             };
-            return [bpCard, slpCard, { l: 'Hydration', v: '—', s: 'N/A', c: '#ADA3B0' }];
+            const hydVal = vitals.hydration ? parseInt(vitals.hydration) : null;
+            const hydCard = {
+              l: 'Hydration',
+              v: hydVal !== null ? hydVal + ' gl' : '—',
+              s: hydVal === null ? 'N/A' : hydVal >= 8 ? 'good' : hydVal >= 5 ? 'okay' : 'low',
+              c: hydVal === null ? '#ADA3B0' : hydVal >= 8 ? '#7BC894' : hydVal >= 5 ? '#E5A064' : '#D14040',
+            };
+            return [bpCard, slpCard, hydCard];
           })().map(s => (
             <Card key={s.l} style={{ padding: 12 }}>
               <div style={{ fontSize: 10, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>{s.l}</div>

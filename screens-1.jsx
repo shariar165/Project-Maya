@@ -3,19 +3,7 @@
 // ──────────────────────────────────────────────────────────────────
 // JOURNEY (monthly guidance)
 // ──────────────────────────────────────────────────────────────────
-function JourneyScreen({ state, setState, openScreen }) {
-  const { iconBtn, primaryBtn, ghostBtn } = window.uiBtns;
-  const lang = state.lang;
-  const L = (key, type) => window.tStr(key, lang, type);
-  const _lsUser = (() => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}'); } catch { return {}; } })();
-  const displayWeek = _lsUser.pregnancyWeek ?? state.week;
-  const monthFromWeek = displayWeek <= 40
-    ? Math.min(9, Math.ceil(displayWeek / 4.345))
-    : Math.min(12, 9 + Math.ceil((displayWeek - 40) / 4));
-  const [active, setActive] = React.useState(monthFromWeek);
-  React.useEffect(() => { setActive(monthFromWeek); }, [monthFromWeek]);
-
-  const months = [
+const MAYA_JOURNEY_MONTHS = [
   { n: 1, tKey: 'monthTitle1', accent: '#FCE0D4', tara: 'sleepy',
     body: 'You may feel very tired and dizzy. Nausea may begin soon. Your uterus is the size of a grape. Rest often and do not skip meals.',
     baby: "Baby's heart starts beating around week 6. The tiny neural tube forms in weeks 3–4 — folic acid protects it. All major organs begin forming.",
@@ -111,8 +99,21 @@ function JourneyScreen({ state, setState, openScreen }) {
     avoid: ['High-mercury fish: shark, swordfish, large tuna', 'Excessive caffeine (still passes into breast milk)', 'Ultra-processed snacks — your recovery needs real food'],
     exercise: 'Gradually return to regular exercise: walking, yoga, light strengthening. Clear with doctor first, especially for C-section recovery.',
     tasks: ['3-month postnatal checkup if not yet done', "Baby's Penta/PCV/OPV 2nd doses (~10 weeks)", "Tummy time daily for baby's head and neck strength"] }];
+window.MAYA_JOURNEY_MONTHS = MAYA_JOURNEY_MONTHS;
 
-  const m = months[active - 1];
+function JourneyScreen({ state, setState, openScreen }) {
+  const { iconBtn, primaryBtn, ghostBtn } = window.uiBtns;
+  const lang = state.lang;
+  const L = (key, type) => window.tStr(key, lang, type);
+  const _lsUser = (() => { try { return JSON.parse(localStorage.getItem('maya_user') || '{}'); } catch { return {}; } })();
+  const displayWeek = _lsUser.pregnancyWeek ?? state.week;
+  const monthFromWeek = displayWeek <= 40
+    ? Math.min(9, Math.ceil(displayWeek / 4.345))
+    : Math.min(12, 9 + Math.ceil((displayWeek - 40) / 4));
+  const [active, setActive] = React.useState(monthFromWeek);
+  React.useEffect(() => { setActive(monthFromWeek); }, [monthFromWeek]);
+
+  const m = MAYA_JOURNEY_MONTHS[active - 1];
 
   return (
     <div className="screen journey">
@@ -141,7 +142,7 @@ function JourneyScreen({ state, setState, openScreen }) {
       {/* month rail */}
       <div style={{ padding: '14px 0 0', overflowX: 'auto', scrollbarWidth: 'none' }}>
         <div style={{ display: 'flex', gap: 8, padding: '0 22px' }}>
-          {months.map((mm) => {
+          {MAYA_JOURNEY_MONTHS.map((mm) => {
             const isPostBirth = mm.n >= 10;
             const isActive = active === mm.n;
             return (

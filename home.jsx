@@ -120,6 +120,8 @@ function HomeScreen({ state, setState, openScreen }) {
   const [proactiveMsg, setProactiveMsg] = React.useState(null);
   const [profileData, setProfileData] = React.useState(null);
   const [appointment, setAppointment] = React.useState(null); // null=loading, false=none, object=real
+  const [waterGlasses, setWaterGlasses] = React.useState(0);
+  const waterDebounceRef = React.useRef(null);
 
   // Use fresh backend profile when available; fall back to localStorage user,
   // then to app state (which itself falls back to tweakDefaults as last resort).
@@ -128,7 +130,7 @@ function HomeScreen({ state, setState, openScreen }) {
   const displayName = profileData?.name           ?? _lsUser.name          ?? name;
   const fruit = WEEK_FRUITS[Math.min(40, Math.max(1, displayWeek))];
   const trimester = L(displayWeek <= 13 ? 'trimester1' : displayWeek <= 27 ? 'trimester2' : 'trimester3');
-  const monthFromWeek = Math.min(9, Math.ceil(displayWeek / 4.345));
+  const monthFromWeek = displayWeek <= 40 ? Math.min(9, Math.ceil(displayWeek / 4.345)) : Math.min(12, 9 + Math.ceil((displayWeek - 40) / 4));
   const todayLabel = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 
   const checks = state.checks;
@@ -155,6 +157,14 @@ function HomeScreen({ state, setState, openScreen }) {
     } catch {}
   }, [checks]);
 
+  // Auto-manage water checkbox based on glass count
+  React.useEffect(() => {
+    const shouldCheck = waterGlasses >= 8;
+    if (checks.water !== shouldCheck) {
+      setState(s => ({ ...s, checks: { ...s.checks, water: shouldCheck } }));
+    }
+  }, [waterGlasses]);
+
   const fmtApptType = (type) => {
     if (!type) return L('nextCheckup');
     const map = { anc: 'ANC Checkup', ultrasound: 'Ultrasound', followup: 'Follow-up', general: 'Checkup' };
@@ -169,6 +179,24 @@ function HomeScreen({ state, setState, openScreen }) {
       return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) +
         ' · ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
     } catch { return ''; }
+  };
+
+  const adjustWater = (delta) => {
+    setWaterGlasses(prev => {
+      const next = Math.min(12, Math.max(0, prev + delta));
+      if (waterDebounceRef.current) clearTimeout(waterDebounceRef.current);
+      waterDebounceRef.current = setTimeout(() => {
+        try {
+          const pid = JSON.parse(localStorage.getItem('maya_user') || '{}').id;
+          if (pid && next > 0) fetch(`${window.BACKEND_URL}/health-log`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ patient_id: pid, data_type: 'hydration', value: String(next) }),
+          }).catch(() => {});
+        } catch {}
+      }, 800);
+      return next;
+    });
   };
 
   React.useEffect(() => {
@@ -213,6 +241,19 @@ function HomeScreen({ state, setState, openScreen }) {
         setAppointment(next || false);
       })
       .catch(() => setAppointment(false));
+
+    // Prefetch today's hydration log to restore the water counter
+    if (patientId) {
+      fetch(`${window.BACKEND_URL}/health-logs/${patientId}?data_type=hydration&limit=1`, { headers: authHeader })
+        .then(r => r.ok ? r.json() : [])
+        .then(logs => {
+          if (logs?.[0]) {
+            const today = new Date().toISOString().slice(0, 10);
+            if (logs[0].created_at?.slice(0, 10) === today) setWaterGlasses(parseInt(logs[0].value) || 0);
+          }
+        })
+        .catch(() => {});
+    }
   }, []);
 
   function handleVoiceOpen() {
@@ -336,8 +377,36 @@ function HomeScreen({ state, setState, openScreen }) {
           </div>
         </div>
         <Card style={{ padding: 6 }}>
+          {/* Water glass stepper */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px' }}>
+            <div style={{ width: 38, height: 38, borderRadius: 12, background: '#DDEEFF', display: 'grid', placeItems: 'center', fontSize: 18 }}>
+              💧
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: 14, color: '#2A1A36', fontWeight: 600, textDecoration: waterGlasses >= 8 ? 'line-through' : 'none', opacity: waterGlasses >= 8 ? 0.5 : 1 }}>
+                {L('checkWater')}
+              </div>
+              <div style={{ fontSize: 11, color: '#7A5E78', marginTop: 1 }}>
+                {lang === 'bn' ? 'দৈনিক লক্ষ্য: ৮ গ্লাস' : 'Daily goal: 8 glasses'}
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <button onClick={() => adjustWater(-1)} style={{
+                width: 28, height: 28, borderRadius: 99, border: '1.5px solid #B8C8D8',
+                background: 'white', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center',
+                color: '#3D2840', fontWeight: 700, lineHeight: 1
+              }}>−</button>
+              <span style={{ fontSize: 13, fontWeight: 700, color: waterGlasses >= 8 ? '#3D7BC8' : '#3D2840', minWidth: 34, textAlign: 'center' }}>
+                {waterGlasses} gl
+              </span>
+              <button onClick={() => adjustWater(1)} style={{
+                width: 28, height: 28, borderRadius: 99, border: 'none',
+                background: waterGlasses >= 8 ? '#3D2840' : '#E8DEF5', cursor: 'pointer', fontSize: 16, display: 'grid', placeItems: 'center',
+                color: waterGlasses >= 8 ? '#FFF1E4' : '#3D2840', fontWeight: 700, lineHeight: 1
+              }}>+</button>
+            </div>
+          </div>
           {[
-          { k: 'water', label: L('checkWater'), sub: L('checkWaterSub'), icon: '💧', tone: '#DDEEFF' },
           { k: 'iron',  label: L('checkIron'),  sub: L('checkIronSub'),  icon: '🌿', tone: '#E6F1DC' },
           { k: 'walk',  label: L('checkWalk'),  sub: L('checkWalkSub'),  icon: '🚶🏽‍♀️', tone: '#FBE5D6' },
           { k: 'kicks', label: L('checkKicks'), sub: L('checkKicksSub'), icon: '👣', tone: '#F4DEEC' }].
@@ -383,27 +452,43 @@ function HomeScreen({ state, setState, openScreen }) {
 
       {/* eat / avoid */}
       <div style={{ padding: '16px 22px 0' }}>
-        <div style={{ fontFamily: 'var(--display)', fontSize: 20, color: '#3D2840', marginBottom: 8, letterSpacing: '-0.01em' }}>
-          {L('forYourBodyToday')}
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
+          <div style={{ fontFamily: 'var(--display)', fontSize: 20, color: '#3D2840', letterSpacing: '-0.01em' }}>
+            {L('forYourBodyToday')}
+          </div>
+          <div style={{ fontSize: 10, color: '#7A5E78', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+            Week {displayWeek}
+          </div>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-          <Card style={{ background: '#F2EBDA' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <Pill tone="cream">{L('eat')}</Pill>
-              <span style={{ fontSize: 22 }}>{fruit.emoji}</span>
+        {(() => {
+          const monthData = window.MAYA_JOURNEY_MONTHS?.[monthFromWeek - 1];
+          const eatItems   = monthData?.eat   ?? [];
+          const avoidItems = monthData?.avoid ?? [];
+          const eatMain    = eatItems[0]   || L('eatContent');
+          const eatSub     = eatItems.length > 1 ? eatItems.slice(1).join(' · ') : L('eatSub');
+          const avoidMain  = avoidItems[0] || L('avoidContent');
+          const avoidSub   = avoidItems.length > 1 ? avoidItems.slice(1).join(' · ') : L('avoidSub');
+          return (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+              <Card style={{ background: '#F2EBDA' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <Pill tone="cream">{L('eat')}</Pill>
+                  <span style={{ fontSize: 22 }}>{fruit.emoji}</span>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#3D2840', lineHeight: 1.35 }}>{eatMain}</div>
+                <div style={{ fontSize: 10, color: '#7A5E78', marginTop: 4, lineHeight: 1.5 }}>{eatSub}</div>
+              </Card>
+              <Card style={{ background: '#F8E2DD' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                  <Pill tone="pink">{L('avoid')}</Pill>
+                  <span style={{ fontSize: 22 }}>🚫</span>
+                </div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: '#3D2840', lineHeight: 1.35 }}>{avoidMain}</div>
+                <div style={{ fontSize: 10, color: '#7A5E78', marginTop: 4, lineHeight: 1.5 }}>{avoidSub}</div>
+              </Card>
             </div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#3D2840', lineHeight: 1.3 }}>{L('eatContent')}</div>
-            <div style={{ fontSize: 11, color: '#7A5E78', marginTop: 4, lineHeight: 1.5 }}>{L('eatSub')}</div>
-          </Card>
-          <Card style={{ background: '#F8E2DD' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <Pill tone="pink">{L('avoid')}</Pill>
-              <span style={{ fontSize: 22 }}>🚫</span>
-            </div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#3D2840', lineHeight: 1.3 }}>{L('avoidContent')}</div>
-            <div style={{ fontSize: 11, color: '#7A5E78', marginTop: 4, lineHeight: 1.5 }}>{L('avoidSub')}</div>
-          </Card>
-        </div>
+          );
+        })()}
       </div>
 
       {/* mental wellness moment */}
