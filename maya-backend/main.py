@@ -759,27 +759,24 @@ async def health():
 
 
 @app.get("/debug/email")
-async def debug_email():
-    """Temporary: test email sending end-to-end and return full result."""
+async def debug_email(to: str = "delivered@resend.dev"):
+    """Temporary: test Resend send to a given address and return full response."""
     import os
     resend_key = os.getenv("RESEND_API_KEY", "")
-    smtp_user  = os.getenv("SMTP_USER", "")
-    if resend_key:
-        try:
-            import httpx
-            async with httpx.AsyncClient(timeout=15) as c:
-                r = await c.post(
-                    "https://api.resend.com/emails",
-                    headers={"Authorization": f"Bearer {resend_key}", "Content-Type": "application/json"},
-                    json={"from": "Maya Health <onboarding@resend.dev>",
-                          "to": ["delivered@resend.dev"],
-                          "subject": "Maya debug test",
-                          "html": "<p>test</p>"},
-                )
-            return {"provider": "resend", "status": r.status_code, "body": r.text}
-        except Exception as e:
-            return {"provider": "resend", "error": str(e)}
-    return {"provider": "console" if not smtp_user else "smtp", "error": "RESEND_API_KEY not set"}
+    if not resend_key:
+        return {"error": "RESEND_API_KEY not set"}
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=15) as c:
+            r = await c.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {resend_key}", "Content-Type": "application/json"},
+                json={"from": "Maya Health <onboarding@resend.dev>",
+                      "to": [to], "subject": "Maya debug test", "html": "<p>test</p>"},
+            )
+        return {"status": r.status_code, "body": r.text, "to": to}
+    except Exception as e:
+        return {"error": str(e)}
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
