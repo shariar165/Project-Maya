@@ -720,12 +720,10 @@ function VoiceScreen({ state, setState, openScreen }) {
     };
   }, []);
 
-  // Intro: play funny clip on first session visit
+  // Intro: play a random funny clip every time VoiceScreen opens
   React.useEffect(() => {
-    const isFirst = !sessionStorage.getItem('taraVoiceOpened');
-    if (isFirst) {
-      sessionStorage.setItem('taraVoiceOpened', '1');
-      taraRef.current?.playRandomFunny(() => setIntroPhase('normal'));
+    if (taraRef.current) {
+      taraRef.current.playRandomFunny(() => setIntroPhase('normal'));
     } else {
       setIntroPhase('normal');
     }

@@ -257,8 +257,7 @@ function HomeScreen({ state, setState, openScreen }) {
   }, []);
 
   function handleVoiceOpen() {
-    if (!taraRef.current || taraRef.current.isFunny()) { openScreen('voice'); return; }
-    taraRef.current.playRandomFunny(() => setTimeout(() => openScreen('voice'), 300));
+    openScreen('voice');
   }
   const allDone = Object.values(checks).every(Boolean);
 
