@@ -18,30 +18,11 @@ function MayaLogo({ size = 22, color = '#2A1A36', dark = false }) {
 
 function MayaGlyph({ size = 32 }) {
   return (
-    <svg viewBox="0 0 40 40" width={size} height={size}>
-      <defs>
-        <radialGradient id="lg" cx="40%" cy="35%" r="65%">
-          <stop offset="0%" stopColor="#3A2A36"/>
-          <stop offset="100%" stopColor="#1A1118"/>
-        </radialGradient>
-      </defs>
-      {/* halo */}
-      <circle cx="20" cy="20" r="18" fill="#FBD7C6" opacity="0.55"/>
-      {/* penguin egg */}
-      <ellipse cx="20" cy="22" rx="13" ry="14" fill="url(#lg)"/>
-      {/* belly */}
-      <ellipse cx="20" cy="24" rx="7" ry="8" fill="#FFF6E8"/>
-      {/* beak */}
-      <path d="M 16 14 Q 20 11 24 14 Q 20 17 16 14 Z" fill="#F5B042"/>
-      {/* eyes */}
-      <circle cx="16" cy="22" r="1.6" fill="#1A0F18"/>
-      <circle cx="24" cy="22" r="1.6" fill="#1A0F18"/>
-      <circle cx="16.4" cy="21.5" r="0.6" fill="#fff"/>
-      <circle cx="24.4" cy="21.5" r="0.6" fill="#fff"/>
-      {/* cheek */}
-      <circle cx="13" cy="25" r="1.4" fill="#F49AAE" opacity="0.7"/>
-      <circle cx="27" cy="25" r="1.4" fill="#F49AAE" opacity="0.7"/>
-    </svg>
+    <img
+      src="assets/Maya main logo.png"
+      alt="Maya"
+      style={{ width: size, height: size, objectFit: 'contain' }}
+    />
   );
 }
 
@@ -66,7 +47,11 @@ function SplashScreen({ onDone }) {
         textAlign: 'center', position: 'relative',
       }}>
         <div style={{ marginBottom: 14 }}>
-          <Tara size={120} mood="happy"/>
+          <img
+            src="assets/Maya main logo.png"
+            alt="Maya logo"
+            style={{ width: 120, height: 120, objectFit: 'contain', filter: 'drop-shadow(0 0 24px rgba(255,180,200,0.35))' }}
+          />
         </div>
         <div style={{
           fontFamily: 'var(--display)',
