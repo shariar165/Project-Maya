@@ -758,6 +758,26 @@ async def health():
     return {"status": "ok"}
 
 
+@app.get("/debug/smtp")
+async def debug_smtp():
+    """Temporary: test SMTP connectivity and report error without exposing credentials."""
+    import smtplib, os
+    host     = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    port     = int(os.getenv("SMTP_PORT", "587"))
+    user     = os.getenv("SMTP_USER", "")
+    password = os.getenv("SMTP_PASSWORD", "")
+    if not user:
+        return {"configured": False, "error": "SMTP_USER is not set"}
+    try:
+        with smtplib.SMTP(host, port, timeout=10) as s:
+            s.ehlo()
+            s.starttls()
+            s.login(user, password)
+        return {"configured": True, "host": host, "port": port, "user": user, "error": None}
+    except Exception as e:
+        return {"configured": True, "host": host, "port": port, "user": user, "error": str(e)}
+
+
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
