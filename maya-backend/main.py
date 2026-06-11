@@ -760,27 +760,26 @@ async def health():
 
 @app.get("/debug/email")
 async def debug_email():
-    """Temporary: report active email provider and connectivity."""
-    import os, smtplib
+    """Temporary: test email sending end-to-end and return full result."""
+    import os
     resend_key = os.getenv("RESEND_API_KEY", "")
     smtp_user  = os.getenv("SMTP_USER", "")
     if resend_key:
         try:
             import httpx
-            async with httpx.AsyncClient(timeout=10) as c:
-                r = await c.get("https://api.resend.com/emails", headers={"Authorization": f"Bearer {resend_key}"})
-            return {"provider": "resend", "reachable": True, "status": r.status_code}
+            async with httpx.AsyncClient(timeout=15) as c:
+                r = await c.post(
+                    "https://api.resend.com/emails",
+                    headers={"Authorization": f"Bearer {resend_key}", "Content-Type": "application/json"},
+                    json={"from": "Maya Health <onboarding@resend.dev>",
+                          "to": ["delivered@resend.dev"],
+                          "subject": "Maya debug test",
+                          "html": "<p>test</p>"},
+                )
+            return {"provider": "resend", "status": r.status_code, "body": r.text}
         except Exception as e:
-            return {"provider": "resend", "reachable": False, "error": str(e)}
-    if smtp_user:
-        host, port = os.getenv("SMTP_HOST","smtp.gmail.com"), int(os.getenv("SMTP_PORT","587"))
-        try:
-            with smtplib.SMTP(host, port, timeout=10) as s:
-                s.ehlo(); s.starttls(); s.login(smtp_user, os.getenv("SMTP_PASSWORD",""))
-            return {"provider": "smtp", "host": host, "reachable": True}
-        except Exception as e:
-            return {"provider": "smtp", "host": host, "reachable": False, "error": str(e)}
-    return {"provider": "console", "reachable": False, "error": "No email credentials set"}
+            return {"provider": "resend", "error": str(e)}
+    return {"provider": "console" if not smtp_user else "smtp", "error": "RESEND_API_KEY not set"}
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
